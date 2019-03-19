@@ -5,3 +5,12 @@ authors = ["Alfio Zappala <oysterpack.inc@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+grpcio = "0.4.4"
+protobuf = "2"
+
+[dev-dependencies]
+version-sync = "0.7.0"
+
+[build-dependencies]
+protoc-grpcio = "1.0.1"
+protobuf-codegen = "2.4.0"

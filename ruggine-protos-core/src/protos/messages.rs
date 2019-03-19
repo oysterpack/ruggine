@@ -14,9 +14,6 @@
  *    limitations under the License.
  */
 
-//! OysterPack ruggine core gRPC Protobuf schemas
+//! Parent module for Protobuf messages
 
-#![deny(missing_docs, missing_debug_implementations)]
-#![doc(html_root_url = "https://docs.rs/ruggine_protos_core/0.1.0")]
-
-pub mod protos;
+pub mod ulid;

@@ -14,9 +14,10 @@
  *    limitations under the License.
  */
 
-//! OysterPack ruggine core gRPC Protobuf schemas
+#[macro_use]
+extern crate version_sync;
 
-#![deny(missing_docs, missing_debug_implementations)]
-#![doc(html_root_url = "https://docs.rs/ruggine_protos_core/0.1.0")]
-
-pub mod protos;
+#[test]
+fn test_html_root_url() {
+    assert_html_root_url_updated!("src/lib.rs");
+}

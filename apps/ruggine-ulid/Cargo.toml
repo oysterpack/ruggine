@@ -1,6 +1,6 @@
 [package]
 name = "ruggine_ulid"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Alfio Zappala <oysterpack.inc@gmail.com>"]
 edition = "2018"
 description = "Command line utility to generate and parse a ULID. (https://github.com/ulid/spec)"
@@ -19,6 +19,7 @@ failure = "0.1.3"
 regex = "1.1.2"
 
 [dev-dependencies]
+version-sync = "0.7.0"
 assert_cmd = "0.10.2"
 lazy_static = "1.3.0"
 

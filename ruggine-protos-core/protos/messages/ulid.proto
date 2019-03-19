@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option optimize_for = SPEED;
+
+package oysterpack.ruggine.protos.core.messages.ulid;
+
+// ULID (https://github.com/ulid/spec)
+message Ulid {
+    uint64 u64_1 = 1;
+    uint64 u64_2 = 2;
+}

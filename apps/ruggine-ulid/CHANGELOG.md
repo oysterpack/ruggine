@@ -6,6 +6,11 @@ This project adheres to [Semantic Versioning](http://semver.org/), as described 
 
 ## \[Unreleased\]
 
+## \[0.1.1\]
+
+### Changes
+- Library docs have been hidden because they are only meant to be used internally by the app binary.
+
 ## \[0.1.0\]
 
 Initial release

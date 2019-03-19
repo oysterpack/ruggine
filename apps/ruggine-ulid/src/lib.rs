@@ -17,10 +17,12 @@
 //! app util functions
 
 #![deny(missing_docs, missing_debug_implementations)]
-#![doc(html_root_url = "https://docs.rs/ruggine_ulid/0.1.0")]
+#![doc(html_root_url = "https://docs.rs/ruggine_ulid/0.1.1")]
+#![doc(hidden)]
 
 use rusty_ulid::Ulid;
 
+#[doc(hidden)]
 /// Supported ULID formats are:
 /// 1. ULID string
 /// 2. u128
