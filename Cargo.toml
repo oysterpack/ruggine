@@ -1,5 +1,5 @@
 [workspace]
-members = ["ruggine-*"]
+members = ["ruggine-*", "apps/ruggine-*"]
 
 [profile.release]
 #Link Time Optimization usually reduces size of binaries and static libraries.

@@ -1,0 +1,27 @@
+[package]
+name = "ruggine_ulid"
+version = "0.1.0"
+authors = ["Alfio Zappala <oysterpack.inc@gmail.com>"]
+edition = "2018"
+description = "Command line utility to generate and parse a ULID. (https://github.com/ulid/spec)"
+license = "MIT/Apache-2.0"
+repository = "https://github.com/oysterpack/ruggine"
+homepage = "https://github.com/oysterpack/ruggine/tree/master/apps/ruggine-ulid"
+documentation = "https://docs.rs/ruggine_ulid"
+readme = "README.md"
+keywords = ["ulid"]
+
+[dependencies]
+rusty_ulid = "0.8.0"
+structopt = "0.2.14"
+exitfailure = "0.5.1"
+failure = "0.1.3"
+regex = "1.1.2"
+
+[dev-dependencies]
+assert_cmd = "0.10.2"
+lazy_static = "1.3.0"
+
+[[bin]]
+name = "ruggine-ulid"
+path = "src/main.rs"

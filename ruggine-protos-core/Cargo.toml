@@ -1,7 +1,7 @@
 [package]
-name = "ruggine-protos-core"
+name = "ruggine_protos_core"
 version = "0.1.0"
-authors = ["Alfio Zappala <oysterpack2016@gmail.com>"]
+authors = ["Alfio Zappala <oysterpack.inc@gmail.com>"]
 edition = "2018"
 
 [dependencies]

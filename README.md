@@ -8,15 +8,20 @@ The vision is to provide a Rust platform that empowers developers and organizati
 Because Rust provides the following competitive advantages:
 
 1. Memory safety
-2. Memory efficiency, i.e.,low memory footprint
-3. Fearless concurrency
-4. Zero-cost abstractions 
-5. Performance 
-6. No garbage collector
-7. Small binaries
-8. First class tooling
-9. Excellent documentation
-10. Open source language
+2. Memory efficiency, i.e.,small memory footprint
+3. Performance
+   - CPU efficiency
+   - No garbage collector
+   - Zero-cost abstractions
+   - Async futures
+   - Async IO 
+4. Fearless concurrency
+   - thanks to memory safety and borrowing/ownership model enforced at compile time 
+5. Single binary deployment
+   - small binaries
+6. First class tooling, i.e., cargo
+7. Excellent documentation
+8. Open source language - empowering the community 
 
 [Rust](https://www.rust-lang.org) is simply the best systems programming language that we can **TRUST** for building production grade systems.
 Rust's focus on **safety**, **speed**, and **concurrency** delivers the performance and control of a low-level language, but with the powerful abstractions of a high-level language.
