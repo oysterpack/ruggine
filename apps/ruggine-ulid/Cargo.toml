@@ -1,6 +1,6 @@
 [package]
 name = "ruggine_ulid"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Alfio Zappala <oysterpack.inc@gmail.com>"]
 edition = "2018"
 description = "Command line utility to generate and parse a ULID. (https://github.com/ulid/spec)"
@@ -10,6 +10,7 @@ homepage = "https://github.com/oysterpack/ruggine/tree/master/apps/ruggine-ulid"
 documentation = "https://docs.rs/ruggine_ulid"
 readme = "README.md"
 keywords = ["ulid"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 rusty_ulid = "0.8.0"
