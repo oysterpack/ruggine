@@ -14,10 +14,13 @@
  *    limitations under the License.
  */
 
-//! OysterPack ruggine core gRPC Protobuf schemas
+//! message related reference implementations
+//!
+//! The intent is to provide reference implementations.
+//! The idea is to generate code modeled after the reference implementations via macros within the
+//! projects that import the protobuf schemas.
+//!
+//! For example, ulid will be imported into many other proto libraries. Each library generates the
+//! grpc / protobuf rust code locally, i.e., scoped to the crate.
 
-#![deny(missing_docs, missing_debug_implementations, warnings)]
-#![doc(html_root_url = "https://docs.rs/ruggine_protos_core/0.1.0")]
-
-pub mod protos;
-pub mod messages;
+pub mod ulid;

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option optimize_for = SPEED;
 
-package oysterpack.ruggine.protos.core.messages.ulid;
+package oysterpack.ruggine.protos.core.messages.ulid.v1;
 
 // ULID (https://github.com/ulid/spec)
 message Ulid {

@@ -229,9 +229,10 @@ impl ::protobuf::reflect::ProtobufValue for Ulid {
 }
 
 static file_descriptor_proto_data: &'static [u8] = b"\
-    \n\nulid.proto\x12,oysterpack.ruggine.protos.core.messages.ulid\"0\n\x04\
-    Ulid\x12\x13\n\x05u64_1\x18\x01\x20\x01(\x04R\x04u641\x12\x13\n\x05u64_2\
-    \x18\x02\x20\x01(\x04R\x04u642B\x02H\x01b\x06proto3\
+    \n.ruggine-protos-core/protos/messages/ulid.proto\x12/oysterpack.ruggine\
+    .protos.core.messages.ulid.v1\"0\n\x04Ulid\x12\x13\n\x05u64_1\x18\x01\
+    \x20\x01(\x04R\x04u641\x12\x13\n\x05u64_2\x18\x02\x20\x01(\x04R\x04u642B\
+    \x02H\x01b\x06proto3\
 ";
 
 static mut file_descriptor_proto_lazy: ::protobuf::lazy::Lazy<::protobuf::descriptor::FileDescriptorProto> = ::protobuf::lazy::Lazy {
