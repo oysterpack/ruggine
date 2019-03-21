@@ -1,5 +1,5 @@
 [package]
-name = "ruggine-ulid"
+name = "ruggine_ulid"
 version = "0.1.2"
 authors = ["Alfio Zappala <oysterpack.inc@gmail.com>"]
 edition = "2018"
@@ -7,7 +7,7 @@ description = "Command line utility to generate and parse a ULID. (https://githu
 license = "MIT/Apache-2.0"
 repository = "https://github.com/oysterpack/ruggine"
 homepage = "https://github.com/oysterpack/ruggine/tree/master/apps/ruggine-ulid"
-documentation = "https://docs.rs/ruggine-ulid"
+documentation = "https://docs.rs/ruggine_ulid"
 readme = "README.md"
 keywords = ["ulid"]
 categories = ["command-line-utilities"]
@@ -23,3 +23,7 @@ regex = "1.1.2"
 version-sync = "0.7.0"
 assert_cmd = "0.10.2"
 lazy_static = "1.3.0"
+
+[[bin]]
+name = "ruggine-ulid"
+path = "src/main.rs"
