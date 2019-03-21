@@ -6,12 +6,13 @@ Contains the core ruggine gRPC Protobuf schemas.
 <pre>
 |-protos
   |-messages
-    |-foo.proto
-    |-bar.proto
+    |-foo_v1.proto
+    |-bar_v1.proto
+    |-bar_v2.proto
     |-...
   |-services
-    |-foo.proto
-    |-bar.proto
+    |-foo_v1.proto
+    |-bar_v2.proto
     |-...
 </pre>
 
@@ -22,27 +23,26 @@ The directory structure is self explanatory:
 - **services** directory defines all grpc services
   - each file in the directory is a separate package, i.e., maps to its own module
   - base package name: **oysterpack.ruggine.protos.core.services**
+- all proto packages are versioned
+- **NOTE:** messages are separated from services because messages can be re-used across services
   
 ## src directory structure
 <pre>
 |-src
   |-messages
     |-foo.rs
+    |-foo
+      |-v1.rs
     |-bar.rs
+      |-v1.rs
+      |-v2.rs
     |-...
   |-services
     |-foo.rs
+      |-v1.rs
     |-bar.rs
-    |-...
-  |-protos
-    |-messages
-      |-foo.rs
-      |-bar.rs
-      |-...
-    |-services
-      |-foo.rs
-      |-bar.rs
-      |-...
+      |-v2.rs
+    |-...  
   |-lib.rs
   |-messages.rs
   |-protos.rs

@@ -14,13 +14,6 @@
  *    limitations under the License.
  */
 
-//! message related reference implementations
-//!
-//! The intent is to provide reference implementations.
-//! The idea is to generate code modeled after the reference implementations via macros within the
-//! projects that import the protobuf schemas.
-//!
-//! For example, ulid will be imported into many other proto libraries. Each library generates the
-//! grpc / protobuf rust code locally, i.e., scoped to the crate.
+//! app protobuf messages
 
-pub mod ulid;
+pub mod v1;

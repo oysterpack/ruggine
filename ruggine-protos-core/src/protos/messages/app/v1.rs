@@ -14,6 +14,9 @@
  *    limitations under the License.
  */
 
-//! ulid protobuf message
+//! app v1 protobuf messages
 
-pub mod v1;
+include!(concat!(
+    env!("OUT_DIR"),
+    "/oysterpack.ruggine.protos.core.messages.app.v1.rs"
+));

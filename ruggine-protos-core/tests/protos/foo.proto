@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+option optimize_for = SPEED;
+
+package oysterpack.ruggine.protos.core.foo;
+
+service Foo {
+    rpc unary(Request) returns (Response) {}
+
+    rpc client_streaming(stream Request) returns (Response) {}
+
+    rpc server_streaming(Request) returns (stream Response) {}
+
+    rpc bidi_streaming(stream Request) returns (stream Response) {}
+}
+
+message Request {
+    enum Futures {
+        ONE = 0;
+        THREE = 1;
+    }
+
+    uint64 id = 1;
+    uint64 sleep = 2;
+    Futures futures_version = 3;
+}
+
+message Response {
+    uint64 id = 1;
+}

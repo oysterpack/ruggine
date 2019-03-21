@@ -20,4 +20,3 @@
 #![doc(html_root_url = "https://docs.rs/ruggine_protos_core/0.1.0")]
 
 pub mod protos;
-pub mod messages;

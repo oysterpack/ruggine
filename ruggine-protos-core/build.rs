@@ -14,32 +14,48 @@
  *    limitations under the License.
  */
 
-use protobuf_codegen::Customize;
-
 fn main() {
-    compile_grpc_protos();
+    generate_tests_grpc_code();
+    generate_message_protobufs();
 }
 
-fn compile_grpc_protos() {
-    protoc(
-        vec!["ulid.proto"],
-        vec!["protos/messages"],
-        "src/protos/messages",
-        None,
-    );
+fn generate_message_protobufs() {
+    let mut config = prost_build::Config::new();
+    config
+        .type_attribute(
+            "oysterpack.ruggine.protos.core.messages.ulid.v1.Ulid",
+            "#[derive(Eq, Hash, Copy, Ord, PartialOrd)]",
+        )
+        .type_attribute(
+            "oysterpack.ruggine.protos.core.messages.app.v1.App",
+            "#[derive(Eq)]",
+        )
+        .type_attribute(
+            "oysterpack.ruggine.protos.core.messages.app.v1.Package",
+            "#[derive(Eq)]",
+        )
+        .type_attribute(
+            "oysterpack.ruggine.protos.core.messages.app.v1.PackageId",
+            "#[derive(Eq, Hash, Ord, PartialOrd)]",
+        );
+
+    tower_grpc_build::Config::from_prost(config)
+        .enable_client(true)
+        .enable_server(true)
+        .build(
+            &[
+                "protos/messages/ulid_v1.proto",
+                "protos/messages/app_v1.proto",
+            ],
+            &["protos/messages"],
+        )
+        .unwrap_or_else(|e| panic!("protobuf compilation failed: {}", e));
 }
 
-pub fn protoc(
-    inputs: Vec<&str>,
-    includes: Vec<&str>,
-    output: &str,
-    customizations: Option<Customize>,
-) {
-    for dir in includes.iter() {
-        println!("cargo:rerun-if-changed={}", dir);
-        println!("cargo:rerun-if-changed={}/**", dir);
-    }
-
-    protoc_grpcio::compile_grpc_protos(inputs, includes, output, customizations)
-        .expect("Failed to compile gRPC definitions!");
+fn generate_tests_grpc_code() {
+    tower_grpc_build::Config::new()
+        .enable_client(true)
+        .enable_server(true)
+        .build(&["tests/protos/foo.proto"], &["tests/protos"])
+        .unwrap_or_else(|e| panic!("protobuf compilation failed: {}", e));
 }

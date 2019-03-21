@@ -14,6 +14,7 @@
  *    limitations under the License.
  */
 
-//! Parent module for Protobuf messages
+//! message protobufs
 
+pub mod app;
 pub mod ulid;

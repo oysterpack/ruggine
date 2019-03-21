@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+import "ulid_v1.proto";
+import "google/protobuf/timestamp.proto";
+
+option optimize_for = SPEED;
+
+package oysterpack.ruggine.protos.core.messages.app.v1;
+
+// App
+message App {
+    // package info
+    Package package = 1;
+    // app instance id
+    oysterpack.ruggine.protos.core.messages.ulid.v1.Ulid instance_id = 2;
+}
+
+// Crate package info that is retrieved from cargo during compile time
+message Package {
+    // package ID
+    PackageId id = 1;
+    // list of authors from the manifest
+    repeated string authors = 2;
+    // description from the manifest
+    string description = 3;
+    // home page from the manifest
+    string homepage = 4;
+    // repository from the manifest
+    string repository = 5;
+}
+
+// PackageId
+message PackageId {
+    // package name
+    string name = 1;
+    // full package version
+    string version = 2;
+}
+
+// Process info
+message Process {
+    // process start timestamp
+    google.protobuf.Timestamp start_time = 1;
+}

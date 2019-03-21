@@ -14,6 +14,14 @@
  *    limitations under the License.
  */
 
-//! ulid protobuf message
+pub mod foo {
+    include!(concat!(
+        env!("OUT_DIR"),
+        "/oysterpack.ruggine.protos.core.foo.rs"
+    ));
+}
 
-pub mod v1;
+#[test]
+fn unary() {
+    // TODO
+}

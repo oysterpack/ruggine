@@ -14,34 +14,37 @@
  *    limitations under the License.
  */
 
-//! ULID protobuf utility methods.
+//! ulid v1
 
-impl From<rusty_ulid::Ulid> for crate::protos::messages::ulid::Ulid {
-    fn from(ulid: rusty_ulid::Ulid) -> crate::protos::messages::ulid::Ulid {
-        let mut proto = crate::protos::messages::ulid::Ulid::new();
-        let (u64_1, u64_2): (u64, u64) = ulid.into();
-        proto.u64_1 = u64_1;
-        proto.u64_2 = u64_2;
-        proto
+include!(concat!(
+    env!("OUT_DIR"),
+    "/oysterpack.ruggine.protos.core.messages.ulid.v1.rs"
+));
+
+impl From<rusty_ulid::Ulid> for Ulid {
+    fn from(ulid: rusty_ulid::Ulid) -> Ulid {
+        let (u64_0, u64_1): (u64, u64) = ulid.into();
+        Ulid { u64_0, u64_1 }
     }
 }
 
-impl From<crate::protos::messages::ulid::Ulid> for rusty_ulid::Ulid {
-    fn from(ulid: crate::protos::messages::ulid::Ulid) -> rusty_ulid::Ulid {
-        (ulid.u64_1, ulid.u64_2).into()
+impl From<Ulid> for rusty_ulid::Ulid {
+    fn from(ulid: Ulid) -> rusty_ulid::Ulid {
+        (ulid.u64_0, ulid.u64_1).into()
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
 
     #[test]
     fn from_ulid() {
         let ulid = rusty_ulid::Ulid::generate();
-        let ulid_proto = crate::protos::messages::ulid::Ulid::from(ulid);
-        let (u64_1, u64_2): (u64, u64) = ulid.into();
+        let ulid_proto = Ulid::from(ulid);
+        let (u64_0, u64_1): (u64, u64) = ulid.into();
+        assert_eq!(ulid_proto.u64_0, u64_0);
         assert_eq!(ulid_proto.u64_1, u64_1);
-        assert_eq!(ulid_proto.u64_2, u64_2);
         assert_eq!(ulid, ulid_proto.into());
     }
 }
