@@ -8,7 +8,10 @@ This project adheres to [Semantic Versioning](http://semver.org/), as described 
 
 ### Changes
 
+## \[0.1.2\]
 
+### Changes
+- Renamed crate to ruggine-ulid from ruggine_ulid
 
 ## \[0.1.1\]
 

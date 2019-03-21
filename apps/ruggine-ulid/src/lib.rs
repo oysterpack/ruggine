@@ -17,7 +17,7 @@
 //! app util functions
 
 #![deny(missing_docs, missing_debug_implementations)]
-#![doc(html_root_url = "https://docs.rs/ruggine_ulid/0.1.2")]
+#![doc(html_root_url = "https://docs.rs/ruggine-ulid/0.1.2")]
 #![doc(hidden)]
 
 use rusty_ulid::Ulid;
