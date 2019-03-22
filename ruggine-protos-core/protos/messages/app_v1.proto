@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 import "ulid_v1.proto";
-import "google/protobuf/timestamp.proto";
+import "time_v1.proto";
 
 option optimize_for = SPEED;
 
@@ -38,7 +38,10 @@ message PackageId {
 }
 
 // Process info
+// TODO: add process metric fields
 message Process {
+    // OS-assigned process identifier
+    uint32 pid = 1;
     // process start timestamp
-    google.protobuf.Timestamp start_time = 1;
+    oysterpack.ruggine.protos.core.messages.time.v1.Timestamp start_time = 2;
 }

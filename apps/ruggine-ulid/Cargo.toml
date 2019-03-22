@@ -7,7 +7,6 @@ description = "Command line utility to generate and parse a ULID. (https://githu
 license = "MIT/Apache-2.0"
 repository = "https://github.com/oysterpack/ruggine"
 homepage = "https://github.com/oysterpack/ruggine/tree/master/apps/ruggine-ulid"
-documentation = "https://docs.rs/ruggine_ulid"
 readme = "README.md"
 keywords = ["ulid"]
 categories = ["command-line-utilities"]

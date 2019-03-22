@@ -20,3 +20,7 @@ include!(concat!(
     env!("OUT_DIR"),
     "/oysterpack.ruggine.protos.core.messages.app.v1.rs"
 ));
+
+// TODO: App!()
+// - generate a lazy static App
+// - use procedural macrp

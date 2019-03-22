@@ -14,8 +14,6 @@
  *    limitations under the License.
  */
 
-//! message protobufs
+//! time related protobufs
 
-pub mod app;
-pub mod time;
-pub mod ulid;
+pub mod v1;

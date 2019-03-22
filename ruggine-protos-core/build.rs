@@ -23,20 +23,44 @@ fn generate_message_protobufs() {
     let mut config = prost_build::Config::new();
     config
         .type_attribute(
-            "oysterpack.ruggine.protos.core.messages.ulid.v1.Ulid",
-            "#[derive(Eq, Hash, Copy, Ord, PartialOrd)]",
+            "oysterpack.ruggine.protos.core.messages.app.v1.App",
+            "#[derive(Eq)]",
         )
         .type_attribute(
             "oysterpack.ruggine.protos.core.messages.app.v1.App",
-            "#[derive(Eq)]",
+            r#"#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]"#,
         )
         .type_attribute(
             "oysterpack.ruggine.protos.core.messages.app.v1.Package",
             "#[derive(Eq)]",
         )
         .type_attribute(
+            "oysterpack.ruggine.protos.core.messages.app.v1.Package",
+            r#"#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]"#,
+        )
+        .type_attribute(
             "oysterpack.ruggine.protos.core.messages.app.v1.PackageId",
             "#[derive(Eq, Hash, Ord, PartialOrd)]",
+        )
+        .type_attribute(
+            "oysterpack.ruggine.protos.core.messages.app.v1.PackageId",
+            r#"#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]"#,
+        )
+        .type_attribute(
+            "oysterpack.ruggine.protos.core.messages.ulid.v1.Ulid",
+            "#[derive(Eq, Hash, Copy, Ord, PartialOrd)]",
+        )
+        .type_attribute(
+            "oysterpack.ruggine.protos.core.messages.ulid.v1.Ulid",
+            r#"#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]"#,
+        )
+        .type_attribute(
+            "oysterpack.ruggine.protos.core.messages.time.v1.Timestamp",
+            "#[derive(Eq, Hash, Ord, PartialOrd)]",
+        )
+        .type_attribute(
+            "oysterpack.ruggine.protos.core.messages.time.v1.Timestamp",
+            r#"#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]"#,
         );
 
     tower_grpc_build::Config::from_prost(config)
@@ -44,8 +68,9 @@ fn generate_message_protobufs() {
         .enable_server(true)
         .build(
             &[
-                "protos/messages/ulid_v1.proto",
                 "protos/messages/app_v1.proto",
+                "protos/messages/time_v1.proto",
+                "protos/messages/ulid_v1.proto",
             ],
             &["protos/messages"],
         )

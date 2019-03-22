@@ -21,6 +21,8 @@ include!(concat!(
     "/oysterpack.ruggine.protos.core.messages.ulid.v1.rs"
 ));
 
+use std::fmt;
+
 impl From<rusty_ulid::Ulid> for Ulid {
     fn from(ulid: rusty_ulid::Ulid) -> Ulid {
         let (u64_0, u64_1): (u64, u64) = ulid.into();
@@ -34,6 +36,13 @@ impl From<Ulid> for rusty_ulid::Ulid {
     }
 }
 
+impl fmt::Display for Ulid {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let ulid: rusty_ulid::Ulid = (self.u64_0, self.u64_1).into();
+        f.write_str(ulid.to_string().as_str())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -42,6 +51,7 @@ mod tests {
     fn from_ulid() {
         let ulid = rusty_ulid::Ulid::generate();
         let ulid_proto = Ulid::from(ulid);
+        println!("{}", ulid_proto);
         let (u64_0, u64_1): (u64, u64) = ulid.into();
         assert_eq!(ulid_proto.u64_0, u64_0);
         assert_eq!(ulid_proto.u64_1, u64_1);

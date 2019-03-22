@@ -1,0 +1,1 @@
+Feature: [01D6GYRVN8JSVSCQ33D500A5Y9] All protobuf messages can be serialized via serde through a gated "serde" feature

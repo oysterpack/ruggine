@@ -1,5 +1,5 @@
 [package]
-name = "ruggine-protos-core"
+name = "ruggine_protos_core"
 version = "0.1.0"
 authors = ["Alfio Zappala <oysterpack.inc@gmail.com>"]
 edition = "2018"
@@ -7,7 +7,6 @@ description = "ruggine core gPRC / protobuf schemas"
 license = "MIT/Apache-2.0"
 repository = "https://github.com/oysterpack/ruggine"
 homepage = "https://github.com/oysterpack/ruggine/tree/master/ruggine-protos-core"
-documentation = "https://docs.rs/ruggine-protos-core"
 readme = "README.md"
 keywords = ["protobuf","grpc"]
 
@@ -22,6 +21,8 @@ tokio = "0.1"
 futures = "0.1"
 
 rusty_ulid = "0.8.0"
+chrono = "0.4.6"
+serde = { version = "1.0", optional = true, features = ["derive"] }
 
 [dev-dependencies]
 version-sync = "0.7.0"

@@ -14,8 +14,10 @@
  *    limitations under the License.
  */
 
-//! message protobufs
+#[macro_use]
+extern crate version_sync;
 
-pub mod app;
-pub mod time;
-pub mod ulid;
+#[test]
+fn test_html_root_url() {
+    assert_html_root_url_updated!("src/lib.rs");
+}
