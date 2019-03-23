@@ -26,5 +26,5 @@ message Request {
 }
 
 message Response {
-    uint64 id = 1;
+    uint64 count = 1;
 }

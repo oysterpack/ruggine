@@ -46,12 +46,16 @@ impl fmt::Display for Ulid {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use log::*;
+    use std::panic::catch_unwind;
 
     #[test]
     fn from_ulid() {
+        let _ = catch_unwind(env_logger::init);
+
         let ulid = rusty_ulid::Ulid::generate();
         let ulid_proto = Ulid::from(ulid);
-        println!("{}", ulid_proto);
+        info!("{}", ulid_proto);
         let (u64_0, u64_1): (u64, u64) = ulid.into();
         assert_eq!(ulid_proto.u64_0, u64_0);
         assert_eq!(ulid_proto.u64_1, u64_1);

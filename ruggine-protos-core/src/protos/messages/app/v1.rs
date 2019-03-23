@@ -73,25 +73,31 @@ macro_rules! package {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use log::*;
+    use std::panic::catch_unwind;
 
     #[test]
     fn package_id_macro() {
+        let _ = catch_unwind(env_logger::init);
+
         let id = PackageId {
             name: env!("CARGO_PKG_NAME").to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
         };
 
-        println!("{:?}", id);
+        info!("{:?}", id);
 
         let id_2 = package_id!();
-        println!("{:?}", id_2);
+        info!("{:?}", id_2);
         assert_eq!(id, id_2);
     }
 
     #[test]
     fn package_macro() {
+        let _ = catch_unwind(env_logger::init);
+
         let pkg = package!();
-        println!("{:#?}", pkg);
+        info!("{:#?}", pkg);
 
         let id = PackageId {
             name: env!("CARGO_PKG_NAME").to_string(),

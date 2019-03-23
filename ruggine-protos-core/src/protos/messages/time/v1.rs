@@ -54,15 +54,19 @@ impl fmt::Display for Timestamp {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use log::*;
+    use std::panic::catch_unwind;
 
     #[test]
     fn datetime_conversions() {
+        let _ = catch_unwind(env_logger::init);
+
         let now = chrono::Utc::now();
         let ts = Timestamp::from(now);
         let datetime: chrono::DateTime<chrono::Utc> = ts.clone().into();
-        println!("now: {}", now);
-        println!("ts: {}", ts);
-        println!("datetime: {}", datetime);
+        info!("now: {}", now);
+        info!("ts: {}", ts);
+        info!("datetime: {}", datetime);
         assert_eq!(now, datetime);
     }
 }

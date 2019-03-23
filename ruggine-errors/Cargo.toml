@@ -1,0 +1,23 @@
+[package]
+name = "ruggine_errors"
+version = "0.1.0"
+authors = ["Alfio Zappala <oysterpack.inc@gmail.com>"]
+edition = "2018"
+description = "Provides support for async execution integrated with futures"
+license = "MIT/Apache-2.0"
+repository = "https://github.com/oysterpack/ruggine"
+homepage = "https://github.com/oysterpack/ruggine/tree/master/ruggine-protos-core"
+readme = "README.md"
+keywords = ["futures","async", "parallel"]
+categories = ["concurrency"]
+
+[dependencies]
+failure = "0.1.5"
+
+[dev-dependencies]
+version-sync = "0.7.0"
+criterion = "0.2.10"
+cucumber_rust = "0.5.1"
+fail = "0.2.1"
+proptest = "0.9.1"
+pretty_assertions = "0.6.1"

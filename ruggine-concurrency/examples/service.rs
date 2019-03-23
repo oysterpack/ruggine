@@ -25,8 +25,9 @@ struct Foo;
 impl Service<String> for Foo {
     type Response = String;
     type Error = Error;
+    type Future = FutureResult<Self::Response, Self::Error>;
 
-    fn process(&mut self, req: String) -> FutureResult<String, Error> {
+    fn process(&mut self, req: String) -> Self::Future {
         async move { Ok(format!("request: {}", req)) }.boxed()
     }
 }
@@ -34,7 +35,9 @@ impl Service<String> for Foo {
 impl Service<(usize, usize)> for Foo {
     type Response = usize;
     type Error = Error;
-    fn process(&mut self, req: (usize, usize)) -> FutureResult<usize, Error> {
+    type Future = FutureResult<Self::Response, Self::Error>;
+
+    fn process(&mut self, req: (usize, usize)) -> Self::Future {
         async move { Ok(req.0 + req.1) }.boxed()
     }
 }

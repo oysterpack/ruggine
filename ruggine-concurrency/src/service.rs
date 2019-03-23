@@ -35,10 +35,11 @@
 //!    struct Foo;
 //!
 //!    impl Service<String> for Foo {
-//!        type Response = String;
-//!        type Error = Error;
+//!       type Response = String;
+//!       type Error = Error;
+//!       type Future = FutureResult<Self::Response, Self::Error>;
 //!
-//!       fn process(&mut self, req: String) -> FutureResult<String, Error> {
+//!       fn process(&mut self, req: String) -> Self::Future {
 //!           async move { Ok(format!("request: {}", req)) }.boxed()
 //!       }
 //!   }
@@ -46,7 +47,9 @@
 //!   impl Service<(usize, usize)> for Foo {
 //!       type Response = usize;
 //!       type Error = Error;
-//!       fn process(&mut self, req: (usize, usize)) -> FutureResult<usize, Error> {
+//!       type Future = FutureResult<Self::Response, Self::Error>;
+//!
+//!       fn process(&mut self, req: (usize, usize)) -> Self::Future {
 //!           async move { Ok(req.0 + req.1) }.boxed()
 //!       }
 //!   }
@@ -76,8 +79,11 @@ where
     /// Error type
     type Error: Send;
 
+    /// Future result
+    type Future: Future<Output = Result<Self::Response, Self::Error>> + Send;
+
     /// Process the request and return the response asynchronously.
-    fn process(&mut self, req: Req) -> FutureResult<Self::Response, Self::Error>;
+    fn process(&mut self, req: Req) -> Self::Future;
 }
 
 #[cfg(test)]
@@ -91,25 +97,21 @@ mod test {
     struct Foo;
 
     impl Service<String> for Foo {
-        /// Response type
         type Response = String;
-
-        /// Error type
         type Error = Error;
+        type Future = FutureResult<Self::Response, Self::Error>;
 
-        fn process(&mut self, req: String) -> FutureResult<String, Error> {
+        fn process(&mut self, req: String) -> Self::Future {
             async move { Ok(format!("request: {}", req)) }.boxed()
         }
     }
 
     impl Service<(usize, usize)> for Foo {
-        /// Response type
         type Response = usize;
-
-        /// Error type
         type Error = Error;
+        type Future = FutureResult<Self::Response, Self::Error>;
 
-        fn process(&mut self, req: (usize, usize)) -> FutureResult<usize, Error> {
+        fn process(&mut self, req: (usize, usize)) -> Self::Future {
             async move { Ok(req.0 + req.1) }.boxed()
         }
     }
