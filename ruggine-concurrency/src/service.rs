@@ -24,6 +24,40 @@
 //!   submitted for async processing, which may result remote network calls.
 //! - It also simplifies testing by making it easy to mock services.
 //!
+//! ## Example
+//! ```
+//! # #![feature(await_macro, async_await, futures_api, arbitrary_self_types)]
+//! # use ruggine_concurrency::{Service, FutureResult};
+//! use futures::{prelude::*, executor::ThreadPool, task::SpawnExt};
+//! use failure::Fail;
+//!
+//! #[derive(Debug, Copy, Clone)]
+//!    struct Foo;
+//!
+//!    impl Service<String> for Foo {
+//!        type Response = String;
+//!        type Error = Error;
+//!
+//!       fn process(&mut self, req: String) -> FutureResult<String, Error> {
+//!           async move { Ok(format!("request: {}", req)) }.boxed()
+//!       }
+//!   }
+//!
+//!   impl Service<(usize, usize)> for Foo {
+//!       type Response = usize;
+//!       type Error = Error;
+//!       fn process(&mut self, req: (usize, usize)) -> FutureResult<usize, Error> {
+//!           async move { Ok(req.0 + req.1) }.boxed()
+//!       }
+//!   }
+//!
+//!   #[allow(warnings)]
+//!   #[derive(Debug, Copy, Clone, Fail)]
+//!   enum Error {
+//!       #[fail(display = "Invalid request")]
+//!       InvalidRequest,
+//!   }
+//! ```
 
 use futures::prelude::*;
 use std::pin::Pin;
@@ -50,10 +84,8 @@ where
 mod test {
 
     use super::*;
-    use futures::{
-        executor::ThreadPool,
-        task::SpawnExt
-    };
+    use failure::Fail;
+    use futures::{executor::ThreadPool, task::SpawnExt};
 
     #[derive(Debug, Copy, Clone)]
     struct Foo;
@@ -66,7 +98,7 @@ mod test {
         type Error = Error;
 
         fn process(&mut self, req: String) -> FutureResult<String, Error> {
-            async move { Ok(format!("{}.len() = {}", req, req.len())) }.boxed()
+            async move { Ok(format!("request: {}", req)) }.boxed()
         }
     }
 
@@ -83,8 +115,9 @@ mod test {
     }
 
     #[allow(warnings)]
-    #[derive(Debug, Copy, Clone)]
+    #[derive(Debug, Copy, Clone, Fail)]
     enum Error {
+        #[fail(display = "Invalid request")]
         InvalidRequest,
     }
 
@@ -106,11 +139,15 @@ mod test {
         println!("rep = {:?}", rep);
 
         let (tx, rx) = futures::channel::oneshot::channel();
-        executor.spawn(async move {
-            let sum = await!(foo.process((1,2))).unwrap();
-            let msg = await!(foo.process(sum.to_string())).unwrap();
-            tx.send(msg).expect("Failed to send response");
-        }).expect("Failed to spawn task");
+        executor
+            .spawn(
+                async move {
+                    let sum = await!(foo.process((1, 2))).unwrap();
+                    let msg = await!(foo.process(sum.to_string())).unwrap();
+                    tx.send(msg).expect("Failed to send response");
+                },
+            )
+            .expect("Failed to spawn task");
         let rep = executor.run(rx).unwrap();
         println!("rep = {:?}", rep);
     }

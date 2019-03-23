@@ -21,6 +21,47 @@ pub mod foo {
     ));
 }
 
+use foo::*;
+use tokio::prelude::*;
+use tower_grpc::codegen::server::*;
+
+#[derive(Clone)]
+struct FooService;
+
+impl foo::server::Foo for FooService {
+    type UnaryFuture = futures::FutureResult<grpc::Response<Response>, grpc::Status>;
+    type ClientStreamingFuture = futures::FutureResult<grpc::Response<Response>, grpc::Status>;
+    type ServerStreamingStream = Box<dyn futures::Stream<Item = Response, Error = grpc::Status>>;
+    type ServerStreamingFuture =
+        futures::FutureResult<grpc::Response<Self::ServerStreamingStream>, grpc::Status>;
+    type BidiStreamingStream = Box<dyn futures::Stream<Item = Response, Error = grpc::Status>>;
+    type BidiStreamingFuture = Box<
+        dyn futures::Future<Item = grpc::Response<Self::BidiStreamingStream>, Error = grpc::Status>,
+    >;
+
+    fn unary(&mut self, request: grpc::Request<Request>) -> Self::UnaryFuture {
+        unimplemented!()
+    }
+
+    fn client_streaming(
+        &mut self,
+        request: grpc::Request<grpc::Streaming<Request>>,
+    ) -> Self::ClientStreamingFuture {
+        unimplemented!()
+    }
+
+    fn server_streaming(&mut self, request: grpc::Request<Request>) -> Self::ServerStreamingFuture {
+        unimplemented!()
+    }
+
+    fn bidi_streaming(
+        &mut self,
+        request: grpc::Request<grpc::Streaming<Request>>,
+    ) -> Self::BidiStreamingFuture {
+        unimplemented!()
+    }
+}
+
 #[test]
 fn unary() {
     // TODO
