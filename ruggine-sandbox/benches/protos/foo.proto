@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option optimize_for = SPEED;
+
+package oysterpack.ruggine.protos.core.bench.foo_service;
+
+service Foo {
+    rpc unary(Request) returns (Response) {}
+
+    rpc client_streaming(stream Request) returns (Response) {}
+
+    rpc server_streaming(Request) returns (stream Response) {}
+
+    rpc bidi_streaming(stream Request) returns (stream Response) {}
+}
+
+message Request {}
+
+message Response {}

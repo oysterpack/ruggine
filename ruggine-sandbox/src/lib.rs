@@ -14,23 +14,9 @@
  *    limitations under the License.
  */
 
-fn main() {
-    generate_tests_grpc_code();
-    generate_benches_grpc_code();
-}
+#![feature(await_macro, async_await, futures_api, arbitrary_self_types)]
+#![deny(clippy::all)]
+#![allow(clippy::unreadable_literal)]
+#![deny(missing_docs, missing_debug_implementations, warnings)]
 
-fn generate_tests_grpc_code() {
-    tower_grpc_build::Config::new()
-        .enable_client(true)
-        .enable_server(true)
-        .build(&["tests/protos/foo.proto"], &["tests/protos"])
-        .unwrap_or_else(|e| panic!("protobuf compilation failed: {}", e));
-}
-
-fn generate_benches_grpc_code() {
-    tower_grpc_build::Config::new()
-        .enable_client(true)
-        .enable_server(true)
-        .build(&["benches/protos/foo.proto"], &["benches/protos"])
-        .unwrap_or_else(|e| panic!("protobuf compilation failed: {}", e));
-}
+//! sandbox
