@@ -119,7 +119,7 @@ fn start_server(rt: &mut Runtime, addr: &str) -> tokio::sync::oneshot::Sender<()
     let new_service = foo::server::FooServer::new(FooService::default());
 
     let h2_settings = Default::default();
-    let mut h2 = tower_h2::Server::new(new_service, h2_settings, DefaultExecutor::current());
+    let mut h2 = tower_h2::Server::new(new_service, h2_settings, rt.executor());
 
     let bind = UnixListener::bind(addr).expect("bind");
 
@@ -175,9 +175,9 @@ fn grpc_poc() {
 
     let h2_settings = Default::default();
     let mut make_client =
-        tower_h2::client::Connect::new(Dst { addr: addr }, h2_settings, DefaultExecutor::current());
+        tower_h2::client::Connect::new(Dst { addr: addr }, h2_settings, rt.executor());
 
-    let send_unary_request = make_client
+    let client_task = make_client
         .make_service(())
         .map(move |conn| {
             // the origin header is required by the http2 protocol - without it, the connection is rejected
@@ -268,7 +268,7 @@ fn grpc_poc() {
             info!("ERR = {:?}", e);
         });
 
-    rt.block_on(send_unary_request).unwrap();
+    rt.block_on(client_task).unwrap();
 
     // signal the server to shutdown
     let _ = tx.send(());
