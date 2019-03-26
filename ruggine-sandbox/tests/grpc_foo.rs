@@ -177,9 +177,37 @@ impl foo::server::Foo for FooService {
 
     fn bidi_streaming(
         &mut self,
-        _request: grpc::Request<grpc::Streaming<foo::Request>>,
+        request: grpc::Request<grpc::Streaming<foo::Request>>,
     ) -> Self::BidiStreamingFuture {
-        unimplemented!()
+        let (mut tx, rx) = futures03::channel::mpsc::channel(0);
+        let value = self.value.clone();
+        // send a response message for each request message that is received
+        // each response message will return current server value
+        let client_streaming_msgs = async move {
+            let mut request = request.into_inner().compat();
+            while let Some(Ok(msg)) = await!(request.next()) {
+                let value = {
+                    let mut value = value.lock();
+                    *value += msg.value;
+                    *value
+                };
+                let response = foo::Response { value};
+                let response = Result::<_,grpc::Status>::Ok(response);
+                if let Err(err) = await!(tx.send(response)) {
+                    error!("client has disconnected: {}", err);
+                    break;
+                }
+            }
+        };
+        self.executor.spawn(client_streaming_msgs).expect("Failed to spawn server streaming task");
+
+        let server_streaming_future = async move {
+            let rx = Compat::new(rx);
+            // the compiler needs the type here explicitly specified
+            let rx: Box<dyn futures::Stream<Item = foo::Response, Error = grpc::Status> + Send> = Box::new(rx);
+            Result::<_,grpc::Status>::Ok(grpc::Response::new(rx))
+        };
+        Box::new(Compat::new(server_streaming_future.boxed()))
     }
 }
 
@@ -314,6 +342,30 @@ fn grpc_poc() {
             let mut response_stream = grpc_response.into_inner().compat();
             while let Some(msg) = await!(response_stream.next()) {
                 info!("server streaming response msg: {:?}", msg);
+            }
+        });
+    }
+
+    // bidi streaming
+    {
+        let mut client = client.clone();
+        let mut executor03_clone = executor03.clone();
+        executor03.run(async move {
+            let (mut tx, rx) = futures03::channel::mpsc::channel(0);
+
+            executor03_clone.spawn(async move {
+                for _ in 0..10_u8 {
+                    let request = foo::Request { value: 1, sleep: 0 };
+                    await!(tx.send(Ok(request))).expect("Failed to send request message on client stream");
+                }
+            }).expect("failed to spawn client streaming task");
+
+            let rx = Compat::new(rx);
+            let grpc_response = await!(client.bidi_streaming(grpc::Request::new(rx)).compat()).unwrap();
+            info!("bidi client streaming response = {:?}", grpc_response);
+            let mut response_stream = grpc_response.into_inner().compat();
+            while let Some(msg) = await!(response_stream.next()) {
+                info!("bidi server streaming response msg: {:?}", msg);
             }
         });
     }
