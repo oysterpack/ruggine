@@ -21,6 +21,7 @@
 //! - Smart clients can be implemented, i.e., request validation can be run client side before the request is
 //!   submitted for async processing, which may result remote network calls.
 //! - It also simplifies testing by making it easy to mock services.
+//! - It enables code generation for server side stubs and clients.
 //!
 
 use futures::prelude::*;
@@ -31,9 +32,9 @@ pub type FutureResult<T> = Pin<Box<dyn Future<Output = T> + Send>>;
 
 /// Future based async function
 pub trait AsyncFunction<Req, Rep>
-    where
-        Req: Send,
-        Rep: Send
+where
+    Req: Send,
+    Rep: Send,
 {
     /// Future result
     type Future: Future<Output = Rep> + Send;
@@ -52,9 +53,8 @@ mod test {
     #[derive(Debug, Copy, Clone)]
     struct Foo;
 
-    impl AsyncFunction<String, Result<String,Error>> for Foo {
-
-        type Future = FutureResult<Result<String,Error>>;
+    impl AsyncFunction<String, Result<String, Error>> for Foo {
+        type Future = FutureResult<Result<String, Error>>;
 
         fn apply(&mut self, req: String) -> Self::Future {
             async move { Ok(format!("request: {}", req)) }.boxed()
@@ -69,6 +69,14 @@ mod test {
         }
     }
 
+    impl AsyncFunction<String, usize> for Foo {
+        type Future = FutureResult<usize>;
+
+        fn apply(&mut self, req: String) -> Self::Future {
+            async move { req.len() }.boxed()
+        }
+    }
+
     #[allow(warnings)]
     #[derive(Debug, Copy, Clone, Fail)]
     enum Error {
@@ -79,7 +87,12 @@ mod test {
     #[test]
     fn service_poc() {
         let mut foo = Foo;
-        let rep = foo.apply("ciao".to_owned());
+        // fully qualified syntax is required because the function is overloaded and the compiler does
+        // not know which implementation to invoke
+        let rep = <Foo as AsyncFunction<String, Result<String, Error>>>::apply(
+            &mut foo,
+            "ciao".to_owned(),
+        );
         let mut executor = ThreadPool::new().unwrap();
         let rep = executor.run(rep).unwrap();
         println!("rep = {:?}", rep);
@@ -88,8 +101,7 @@ mod test {
         let rep = executor.run(rep).unwrap();
         println!("rep = {:?}", rep);
 
-        // fully qualified syntax
-        let rep = <Foo as AsyncFunction<(usize, usize), Result<usize, Error>>>::apply(&mut foo, (1, 2));
+        let rep = foo.apply((1, 2));
         let rep = executor.run(rep).unwrap();
         println!("rep = {:?}", rep);
 
@@ -98,12 +110,16 @@ mod test {
             .spawn(
                 async move {
                     let sum = await!(foo.apply((1, 2))).unwrap();
-                    let msg = await!(foo.apply(sum.to_string())).unwrap();
+                    let msg = await!(<Foo as AsyncFunction<String, usize>>::apply(
+                        &mut foo,
+                        sum.to_string()
+                    ));
                     tx.send(msg).expect("Failed to send response");
                 },
             )
             .expect("Failed to spawn task");
         let rep = executor.run(rx).unwrap();
         println!("rep = {:?}", rep);
+        assert_eq!(rep, 1);
     }
 }

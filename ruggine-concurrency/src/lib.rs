@@ -28,4 +28,5 @@ pub use futures;
 pub mod executor;
 pub mod function;
 
+pub use executor::global_executor;
 pub use function::{AsyncFunction, FutureResult};
