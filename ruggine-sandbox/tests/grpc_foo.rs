@@ -29,7 +29,7 @@ use futures03::{compat::*, future::FutureExt, stream::{
     SpawnExt
 }, sink::SinkExt};
 use log::*;
-use ruggine_concurrency::futures as futures03;
+use ruggine_async::futures as futures03;
 
 use parking_lot::Mutex;
 use std::{env, panic::catch_unwind, sync::Arc};
@@ -39,7 +39,6 @@ use tokio::{
 };
 use tower::MakeService;
 use tower_grpc::codegen::server::grpc;
-use tower::util::ServiceExt;
 
 #[derive(Clone)]
 struct FooService {
@@ -335,7 +334,6 @@ fn grpc_poc() {
     // server streaming
     {
         let mut client = client.clone();
-        let mut executor03_clone = executor03.clone();
         executor03.run(async move {
             let request = foo::Request { value: 5, sleep: 0 };
             let grpc_response = await!(client.server_streaming(grpc::Request::new(request)).compat()).unwrap();

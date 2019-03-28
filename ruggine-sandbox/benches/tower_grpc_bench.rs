@@ -26,7 +26,7 @@ use criterion::{BatchSize, Criterion};
 
 use futures03::{compat::*, future::FutureExt, stream::StreamExt, task::SpawnExt};
 use log::*;
-use ruggine_concurrency::futures as futures03;
+use ruggine_async::futures as futures03;
 
 use parking_lot::Mutex;
 use std::{env, panic::catch_unwind, sync::Arc};

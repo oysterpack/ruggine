@@ -25,6 +25,6 @@ use failure::*;
 
 /// Signifies an error is never expected to happen.
 /// This is meant to be used where the API requires an error type to be specified, but an error is impossible.
-#[derive(Debug, Fail, PartialEq, Eq)]
+#[derive(Debug, Fail)]
 #[fail(display = "Never")]
 pub struct Never;

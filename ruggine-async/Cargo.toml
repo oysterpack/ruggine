@@ -1,14 +1,14 @@
 [package]
-name = "ruggine_concurrency"
+name = "ruggine_async"
 version = "0.1.0"
 authors = ["Alfio Zappala <oysterpack.inc@gmail.com>"]
 edition = "2018"
 description = "Provides support for async execution integrated with futures"
 license = "MIT/Apache-2.0"
 repository = "https://github.com/oysterpack/ruggine"
-homepage = "https://github.com/oysterpack/ruggine/tree/master/ruggine-protos-core"
+homepage = "https://github.com/oysterpack/ruggine/tree/master/ruggine-async"
 readme = "README.md"
-keywords = ["futures","async", "parallel"]
+keywords = ["futures", "async", "parallel"]
 categories = ["concurrency"]
 
 [dependencies]
@@ -17,6 +17,7 @@ lazy_static = "1.3.0"
 parking_lot = {version ="0.7.1", features = ["nightly"] }
 hashbrown = {version = "0.1.8", features = ["serde"]}
 log = "0.4.6"
+tokio-timer = {version = "0.2.10", optional = true}
 
 [dev-dependencies]
 version-sync = "0.7.0"
@@ -27,6 +28,10 @@ env_logger = "0.6.1"
 failure = "0.1.5"
 rusty_ulid = "0.8.0"
 tokio = "0.1.18"
+
+[features]
+default = ["timer"]
+timer = ["tokio-timer"]
 
 [[bench]]
 name = "executor_bench"

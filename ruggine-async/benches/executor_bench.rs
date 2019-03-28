@@ -22,7 +22,7 @@ extern crate criterion;
 use criterion::Criterion;
 
 use futures::{compat::*, task::SpawnExt};
-use ruggine_concurrency::global_executor;
+use ruggine_async::global_executor;
 
 criterion_group!(benches, executor_bench,);
 

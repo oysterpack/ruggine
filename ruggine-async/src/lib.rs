@@ -14,13 +14,13 @@
  *    limitations under the License.
  */
 
-//! OysterPack ruggine concurrency support
+//! OysterPack ruggine async support
 
 #![feature(await_macro, async_await, futures_api, arbitrary_self_types)]
 #![deny(clippy::all)]
 #![allow(clippy::unreadable_literal)]
 #![deny(missing_docs, missing_debug_implementations)]
-#![doc(html_root_url = "https://docs.rs/ruggine_concurrency/0.1.0")]
+#![doc(html_root_url = "https://docs.rs/ruggine_async/0.1.0")]
 
 /// re-exporting futures 0.3 API in order to make it easy to use it side by side with futures 0.1 API
 pub use futures;
@@ -29,4 +29,4 @@ pub mod executor;
 pub mod function;
 
 pub use executor::global_executor;
-pub use function::{AsyncFunction, FutureResult};
+pub use function::{FutureResult, Unary};
