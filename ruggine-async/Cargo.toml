@@ -12,12 +12,14 @@ keywords = ["futures", "async", "parallel"]
 categories = ["concurrency"]
 
 [dependencies]
+ruggine_errors = {version = "0.1", path = "../ruggine-errors"}
 futures-preview = {version = "0.3.0-alpha.13", features = ["compat"] }
 lazy_static = "1.3.0"
 parking_lot = {version ="0.7.1", features = ["nightly"] }
 hashbrown = {version = "0.1.8", features = ["serde"]}
 log = "0.4.6"
 tokio-timer = {version = "0.2.10", optional = true}
+failure = "0.1.5"
 
 [dev-dependencies]
 version-sync = "0.7.0"
@@ -25,7 +27,6 @@ criterion = "0.2.10"
 proptest = "0.9.1"
 pretty_assertions = "0.6.1"
 env_logger = "0.6.1"
-failure = "0.1.5"
 rusty_ulid = "0.8.0"
 tokio = "0.1.18"
 

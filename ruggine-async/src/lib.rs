@@ -27,6 +27,8 @@ pub use futures;
 
 pub mod executor;
 pub mod function;
+#[cfg(feature = "timer")]
+pub mod timer;
 
 pub use executor::global_executor;
 pub use function::{FutureResult, Unary};
