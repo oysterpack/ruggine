@@ -28,10 +28,10 @@ use futures::prelude::*;
 use std::pin::Pin;
 
 /// Pinned Boxed Future
-pub type FutureResult<T> = Pin<Box<dyn Future<Output = T> + Send>>;
+pub type PinnedFuture<T> = Pin<Box<dyn Future<Output = T> + Send>>;
 
 /// Pinned Boxed Stream
-pub type FutureStream<T> = Pin<Box<dyn Stream<Item = T> + Send>>;
+pub type PinnedStream<T> = Pin<Box<dyn Stream<Item = T> + Send>>;
 
 /// Unary function where the client sends a single request to the server and gets a single
 /// response future back, just like a normal function call.
@@ -101,7 +101,7 @@ mod test {
         struct Foo;
 
         impl Unary<String, Result<String, Error>> for Foo {
-            type Future = FutureResult<Result<String, Error>>;
+            type Future = PinnedFuture<Result<String, Error>>;
 
             fn apply(&mut self, req: String) -> Self::Future {
                 async move { Ok(format!("request: {}", req)) }.boxed()
@@ -109,7 +109,7 @@ mod test {
         }
 
         impl Unary<(usize, usize), Result<usize, Error>> for Foo {
-            type Future = FutureResult<Result<usize, Error>>;
+            type Future = PinnedFuture<Result<usize, Error>>;
 
             fn apply(&mut self, req: (usize, usize)) -> Self::Future {
                 async move { Ok(req.0 + req.1) }.boxed()
@@ -117,7 +117,7 @@ mod test {
         }
 
         impl Unary<String, usize> for Foo {
-            type Future = FutureResult<usize>;
+            type Future = PinnedFuture<usize>;
 
             fn apply(&mut self, req: String) -> Self::Future {
                 async move { req.len() }.boxed()
@@ -173,9 +173,9 @@ mod test {
         struct Foo;
 
         impl ClientStreaming<u64, u64> for Foo {
-            type Stream = FutureStream<u64>;
+            type Stream = PinnedStream<u64>;
 
-            type Future = FutureResult<u64>;
+            type Future = PinnedFuture<u64>;
 
             fn apply(&mut self, mut req: Self::Stream) -> Self::Future {
                 async move {
@@ -205,7 +205,7 @@ mod test {
         struct Foo;
 
         impl ServerStreaming<u64, u64> for Foo {
-            type Stream = FutureStream<u64>;
+            type Stream = PinnedStream<u64>;
 
             fn apply(&mut self, req: u64) -> Self::Stream {
                 let mut rep = Vec::new();
@@ -236,8 +236,8 @@ mod test {
         struct Foo;
 
         impl BidirectionalStreaming<u64, u64> for Foo {
-            type ReqStream = FutureStream<u64>;
-            type RepStream = FutureStream<u64>;
+            type ReqStream = PinnedStream<u64>;
+            type RepStream = PinnedStream<u64>;
 
             fn apply(&mut self, mut req: Self::ReqStream) -> Self::RepStream {
                 let (mut tx, rx) = futures::channel::mpsc::channel(0);

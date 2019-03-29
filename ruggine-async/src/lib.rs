@@ -31,4 +31,4 @@ pub mod function;
 pub mod timer;
 
 pub use executor::global_executor;
-pub use function::{FutureResult, Unary};
+pub use function::{PinnedFuture, Unary};
