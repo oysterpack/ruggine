@@ -69,10 +69,12 @@
 //! 01D6989F6P0TGQ8NH3K64EH6TD 1877390914292581084991991368823380813 (101773565394028193, 8382926898730670925) 2019-03-18T20:36:06.486Z
 //! ```
 
+mod utils;
+
 use exitfailure::ExitFailure;
-use ruggine_ulid::parse_ulid;
 use rusty_ulid::Ulid;
 use structopt::StructOpt;
+use utils::parse_ulid;
 
 fn main() -> Result<(), ExitFailure> {
     Command::from_args().execute()?;
