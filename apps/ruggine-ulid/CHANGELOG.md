@@ -11,7 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/), as described 
 ## \[0.1.2\]
 
 ### Changes
-- Renamed crate to ruggine-ulid from ruggine_ulid
+- renamed lib.rs to utils.rs, which is not loaded as an app module
 
 ## \[0.1.1\]
 
