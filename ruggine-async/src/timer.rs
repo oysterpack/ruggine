@@ -54,7 +54,12 @@ lazy_static::lazy_static! {
 
 }
 
-/// A future that completes at a specified instant in time.
+/// Returns the handle for the global [Timer](https://docs.rs/tokio-timer/latest/tokio_timer/timer/struct.Timer.html).
+pub fn global_timer_handle() -> &'static tokio_timer::timer::Handle {
+    &TIMER_HANDLE
+}
+
+/// A future that completes at a specified instant in time. It uses a global [Timer](https://docs.rs/tokio-timer/latest/tokio_timer/timer/struct.Timer.html).
 ///
 /// Only millisecond level resolution is guaranteed. There is no guarantee as to how the sub-millisecond portion of deadline will be handled.
 /// This should not be used for high-resolution timer use cases.
@@ -77,11 +82,42 @@ lazy_static::lazy_static! {
 ///  });
 /// ```
 pub fn delay(duration: Duration) -> tokio_timer::Delay {
-    let one_ms = min_duration();
-    let duration = duration.checked_sub(one_ms).or(Some(one_ms)).unwrap();
-    let duration = if duration < one_ms { one_ms } else { duration };
+    delay_with_timer(duration, &TIMER_HANDLE)
+}
 
-    TIMER_HANDLE.delay(Instant::now() + duration)
+/// A future that completes at a specified instant in time that is backed by the specified timer.
+///
+/// Only millisecond level resolution is guaranteed. There is no guarantee as to how the sub-millisecond portion of deadline will be handled.
+/// This should not be used for high-resolution timer use cases.
+///
+/// If delay less than 1 ms is requested, then a delay duration of 1 ms will be returned.
+///
+/// ## NOTES
+/// - It appears that 1 ms overhead is added for each delay event. To compensate, 1 ms is subtracted.
+///   If after subtracting, the delay is less than 1 ms, than 1 ms is used as the delay.
+/// - `tokio_timer::Delay` is a v0.1 Future, but it can easily be converted into a v0.3 future via:
+/// ```rust
+/// # #![feature(await_macro, async_await, futures_api, arbitrary_self_types)]
+/// # use std::time::*;
+/// use futures::{ compat::*, prelude::* };
+/// use ruggine_async::{timer::*, global_executor};
+/// global_executor().run(async {
+///    // convert the tokio_timer::Delay into a v3 Future via the futures::compat::Future01CompatExt
+///    let sleep = delay_with_timer(Duration::from_millis(100), global_timer_handle()).compat();
+///    let _ = await!(sleep);
+///  });
+/// ```
+pub fn delay_with_timer(
+    duration: Duration,
+    timer_handle: &tokio_timer::timer::Handle,
+) -> tokio_timer::Delay {
+    let one_ms = min_duration();
+    let duration = duration
+        .checked_sub(one_ms)
+        .or_else(|| Some(one_ms))
+        .unwrap();
+    let duration = if duration < one_ms { one_ms } else { duration };
+    timer_handle.delay(Instant::now() + duration)
 }
 
 /// minimum supported timer duration
@@ -177,27 +213,23 @@ pub struct Interval {
     interval: Duration,
 }
 
-impl Stream for Interval {
-    type Item = ();
-
-    fn poll_next(mut self: Pin<&mut Self>, waker: &Waker) -> Poll<Option<Self::Item>> {
-        let f = Pin::new(&mut self.delay);
-        match f.poll(waker) {
-            Poll::Pending => Poll::Pending,
-            Poll::Ready(_) => {
-                self.delay = delay(self.interval).compat();
-                Poll::Ready(Some(()))
-            }
-        }
-    }
-}
-
 impl Interval {
-    /// Creates a new Interval that yields at the specified interval duration - starting now.
+    /// Returns the interval duration
+    pub fn interval(&self) -> Duration {
+        self.interval
+    }
+
+    /// Creates a new Interval that yields at the specified interval duration.
     /// - The minimum supported duration is 1 ms.
     pub fn new(interval: Duration) -> Self {
+        Interval::with_timer(interval, global_timer_handle())
+    }
+
+    /// Creates a new Interval that yields at the specified interval duration that is backed by the specified timer.
+    /// - The minimum supported duration is 1 ms.
+    pub fn with_timer(interval: Duration, timer: &tokio_timer::timer::Handle) -> Self {
         Self {
-            delay: delay(interval).compat(),
+            delay: delay_with_timer(interval, timer).compat(),
             interval,
         }
     }
@@ -207,12 +239,47 @@ impl Interval {
     /// - The initial delay may be a zero duration, which would be the same [Interval::new()](#method.new).
     ///   Otherwise, it must be at least 1 ms.
     pub fn starting_after(initial_delay: Duration, interval: Duration) -> Self {
+        Interval::starting_after_with_timer(initial_delay, interval, global_timer_handle())
+    }
+
+    /// Create a new Interval that starts after the initial delay and yields every duration interval after that.
+    /// - The minimum supported interval duration is 1 ms.
+    /// - The initial delay may be a zero duration, which would be the same [Interval::new()](#method.new).
+    ///   Otherwise, it must be at least 1 ms.
+    pub fn starting_after_with_timer(
+        initial_delay: Duration,
+        interval: Duration,
+        timer: &tokio_timer::timer::Handle,
+    ) -> Self {
         if initial_delay == Duration::new(0, 0) {
             return Interval::new(interval);
         }
         Self {
-            delay: delay(initial_delay).compat(),
+            delay: delay_with_timer(initial_delay, timer).compat(),
             interval,
+        }
+    }
+}
+
+impl Stream for Interval {
+    type Item = ();
+
+    fn poll_next(mut self: Pin<&mut Self>, waker: &Waker) -> Poll<Option<Self::Item>> {
+        let f = Pin::new(&mut self.delay);
+        match f.poll(waker) {
+            Poll::Pending => Poll::Pending,
+            Poll::Ready(Ok(_)) => {
+                self.delay = delay(self.interval).compat();
+                Poll::Ready(Some(()))
+            }
+            Poll::Ready(Err(err)) => {
+                if err.is_shutdown() {
+                    Poll::Ready(None)
+                } else {
+                    warn!("timer is at capacity: {}", err);
+                    Poll::Pending
+                }
+            }
         }
     }
 }
