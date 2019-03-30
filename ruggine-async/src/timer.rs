@@ -154,35 +154,136 @@ pub trait FutureTimerExt: Future {
     ///  }
     /// ```
     fn timeout(self, timeout: Duration) -> PinnedFuture<Result<Self::Output, TimeoutError>>;
+
+    /// Delays the future to run after the specified duration
+    fn delay(self, duration: Duration) -> PinnedFuture<Result<Self::Output, TimerError>>;
 }
 
 impl<T> FutureTimerExt for T
 where
-    T: Future + TryFuture + Send + std::marker::Unpin + 'static,
+    T: Future + Send + std::marker::Unpin + 'static,
 {
-    fn timeout(self, timeout: Duration) -> PinnedFuture<Result<Self::Output, TimeoutError>> {
-        let mut delay = delay(timeout).compat().fuse();
+    fn timeout(self, duration: Duration) -> PinnedFuture<Result<Self::Output, TimeoutError>> {
+        let delay = delay(duration);
+        let deadline = delay.deadline();
+        let mut delay = delay.compat().fuse();
         let mut f = self.fuse();
 
         async move {
             futures::select! {
-                result   = f     => Ok(result),
-                _timeout = delay =>  Err(TimeoutError(timeout))
+                result = f     => Ok(result),
+                result = delay =>  Err(TimeoutError::from_delay_result(result, duration, deadline))
+            }
+        }
+            .boxed()
+    }
+
+    fn delay(self, duration: Duration) -> PinnedFuture<Result<Self::Output, TimerError>> {
+        let delay = delay(duration);
+        let deadline = delay.deadline();
+        async move {
+            match await!(delay.compat()) {
+                Ok(_) => Ok(await!(self)),
+                Err(err) => Err(TimerError::from_timer_error(err, duration, deadline)),
             }
         }
             .boxed()
     }
 }
 
-/// Timeout error
+/// Timeout error indicates a future did not complete before a specified deadline, i.e., the future timed out.
+/// The requested delay duration and deadline are returned back with the error.
 #[derive(Debug, Fail, Copy, Clone)]
-#[fail(display = "Timeout error: {:?}", _0)]
-pub struct TimeoutError(Duration);
+pub enum TimeoutError {
+    /// task timed out
+    #[fail(
+        display = "Task timed out: duration = {:?}, deadline = {:?}",
+        duration, deadline
+    )]
+    Timeout {
+        /// timeout duration
+        duration: Duration,
+        /// deadline
+        deadline: Instant,
+    },
+    /// Timer is shutdown
+    #[fail(
+        display = "Timer is shutdown: duration = {:?}, deadline = {:?}",
+        duration, deadline
+    )]
+    TimerShutdown {
+        /// timeout duration
+        duration: Duration,
+        /// deadline
+        deadline: Instant,
+    },
+    /// Timer is at capacity
+    #[fail(
+        display = "Timer is at capacity: duration = {:?}, deadline = {:?}",
+        duration, deadline
+    )]
+    TimerAtCapacity {
+        /// timeout duration
+        duration: Duration,
+        /// deadline
+        deadline: Instant,
+    },
+}
 
 impl TimeoutError {
-    /// Returns the timeout duration
-    pub fn timeout(&self) -> Duration {
-        self.0
+    fn from_delay_result(
+        result: Result<(), tokio_timer::Error>,
+        duration: Duration,
+        deadline: Instant,
+    ) -> Self {
+        match result {
+            Ok(_) => TimeoutError::Timeout { duration, deadline },
+            Err(err) => {
+                if err.is_shutdown() {
+                    TimeoutError::TimerShutdown { duration, deadline }
+                } else {
+                    TimeoutError::TimerAtCapacity { duration, deadline }
+                }
+            }
+        }
+    }
+}
+
+/// Timer error indicates an error has been received from the associated Timer driving the Delay.
+/// The requested delay duration and deadline are returned back with the error.
+#[derive(Debug, Fail, Copy, Clone)]
+pub enum TimerError {
+    /// Timer is shutdown
+    #[fail(
+        display = "Timer is shutdown: duration = {:?}, deadline = {:?}",
+        duration, deadline
+    )]
+    TimerShutdown {
+        /// delay duration
+        duration: Duration,
+        /// deadline
+        deadline: Instant,
+    },
+    /// Timer is at capacity
+    #[fail(
+        display = "Timer is at capacity: duration = {:?}, deadline = {:?}",
+        duration, deadline
+    )]
+    TimerAtCapacity {
+        /// delay duration
+        duration: Duration,
+        /// deadline
+        deadline: Instant,
+    },
+}
+
+impl TimerError {
+    fn from_timer_error(err: tokio_timer::Error, duration: Duration, deadline: Instant) -> Self {
+        if err.is_shutdown() {
+            TimerError::TimerShutdown { duration, deadline }
+        } else {
+            TimerError::TimerAtCapacity { duration, deadline }
+        }
     }
 }
 
@@ -354,6 +455,23 @@ mod tests {
             );
             assert!(result.is_err());
         }
+    }
+
+    #[test]
+    fn delayed_future() {
+        init_logging();
+        let f: PinnedFuture<Instant> = async { Instant::now() }.boxed();
+        let f = f.delay(Duration::from_millis(10));
+        let now = Instant::now();
+        let future_run_ts = crate::global_executor().run(f).unwrap();
+        let delay = future_run_ts - now;
+        info!(
+            "delayed_future(): future result: {:?} : {:?} : {:?}",
+            future_run_ts,
+            now.elapsed(),
+            delay
+        );
+        assert!(delay >= Duration::from_millis(9) && delay <= Duration::from_millis(11));
     }
 
     #[test]
