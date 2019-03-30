@@ -130,7 +130,7 @@ pub trait FutureTimerExt: Future {
     /// Allows a Future to execute for a limited amount of time.
     /// - If the future completes before the timeout has expired, then the completed value is returned.
     ///   Otherwise, a timeout error is returned
-    /// - minininum timeout duration is 1 ms
+    /// - minimum timeout duration is 1 ms
     ///
     /// ## Example
     /// ```
@@ -156,6 +156,20 @@ pub trait FutureTimerExt: Future {
     fn timeout(self, timeout: Duration) -> PinnedFuture<Result<Self::Output, TimeoutError>>;
 
     /// Delays the future to run after the specified duration
+    /// - minimum timeout duration is 1 ms
+    ///
+    /// ## Example
+    /// ```
+    /// # #![feature(await_macro, async_await, futures_api, arbitrary_self_types)]
+    /// # use std::time::*;
+    /// use futures::{ compat::*, prelude::* };
+    /// use ruggine_async::{timer::*, global_executor};
+    /// let now = Instant::now();
+    /// let f = async { Instant::now() }.boxed().delay(Duration::from_millis(10));
+    /// let future_run_ts = global_executor().run(f).unwrap();
+    /// let delay = future_run_ts - now;
+    /// assert!(delay >= Duration::from_millis(9) && delay <= Duration::from_millis(11));
+    /// ```
     fn delay(self, duration: Duration) -> PinnedFuture<Result<Self::Output, TimerError>>;
 }
 
@@ -460,8 +474,9 @@ mod tests {
     #[test]
     fn delayed_future() {
         init_logging();
-        let f: PinnedFuture<Instant> = async { Instant::now() }.boxed();
-        let f = f.delay(Duration::from_millis(10));
+        let f = async { Instant::now() }
+            .boxed()
+            .delay(Duration::from_millis(10));
         let now = Instant::now();
         let future_run_ts = crate::global_executor().run(f).unwrap();
         let delay = future_run_ts - now;
