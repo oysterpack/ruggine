@@ -33,6 +33,7 @@ tokio = "0.1.18"
 [features]
 default = ["timer"]
 timer = ["tokio-timer"]
+io-compat = ["futures-preview/io-compat"]
 
 [[bench]]
 name = "executor_bench"

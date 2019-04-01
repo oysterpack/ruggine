@@ -14,7 +14,17 @@
  *    limitations under the License.
  */
 
-//! Timer based extensions built on top of [tokio-timer](https://crates.io/crates/tokio-timer).
+//! Provides timer based utilities leveraging [tokio-timer](https://crates.io/crates/tokio-timer).
+//!
+//! All of the time related functionality is backed by an underlying [Timer](https://docs.rs/tokio-timer/latest/tokio_timer/timer/struct.Timer.html).
+//! This module runs a Timer on a background thread. A [Handle](https://docs.rs/tokio-timer/latest/tokio_timer/timer/struct.Handle.html)
+//! to the `Timer` can be obtained via [global_timer_handle()](fn.global_timer_handle.html).
+//!
+//! A Timer Handle is used to construct new [Delay](https://docs.rs/tokio-timer/latest/tokio_timer/struct.Delay.html) instances, which are
+//! the lower level time constructs that are used to build higher level constructs such as timeouts and [intervals](struct.Interval.html).
+//!
+//! [FutureTimerExt](trait.FutureTimerExt.html) provides [delay()](trait.FutureTimerExt.html#tymethod.delay) and [timeout()](trait.FutureTimerExt.html#tymethod.timeout) Future extensions.
+//!
 //!
 //! ## Notes
 //! - [Timer](https://docs.rs/tokio-timer/latest/tokio_timer/timer/struct.Timer.html) has a resolution
@@ -55,6 +65,8 @@ lazy_static::lazy_static! {
 }
 
 /// Returns the handle for the global [Timer](https://docs.rs/tokio-timer/latest/tokio_timer/timer/struct.Timer.html).
+/// - The [Handle](https://docs.rs/tokio-timer/latest/tokio_timer/timer/struct.Handle.html) allows creating
+///   [Delay](https://docs.rs/tokio-timer/latest/tokio_timer/struct.Delay.html) instances that are driven by the associated timer.
 pub fn global_timer_handle() -> &'static tokio_timer::timer::Handle {
     &TIMER_HANDLE
 }
@@ -111,12 +123,16 @@ pub fn delay_with_timer(
     duration: Duration,
     timer_handle: &tokio_timer::timer::Handle,
 ) -> tokio_timer::Delay {
-    let one_ms = min_duration();
+    let min_duration = min_duration();
     let duration = duration
-        .checked_sub(one_ms)
-        .or_else(|| Some(one_ms))
+        .checked_sub(min_duration)
+        .or_else(|| Some(min_duration))
         .unwrap();
-    let duration = if duration < one_ms { one_ms } else { duration };
+    let duration = if duration < min_duration {
+        min_duration
+    } else {
+        duration
+    };
     timer_handle.delay(Instant::now() + duration)
 }
 
@@ -127,6 +143,23 @@ pub fn min_duration() -> Duration {
 
 /// Defines timer based extensions for futures
 pub trait FutureTimerExt: Future {
+    /// Delays running the future for the specified duration.
+    /// - minimum timeout duration is 1 ms
+    ///
+    /// ## Example
+    /// ```
+    /// # #![feature(await_macro, async_await, futures_api, arbitrary_self_types)]
+    /// # use std::time::*;
+    /// use futures::{ compat::*, prelude::* };
+    /// use ruggine_async::{timer::*, global_executor};
+    /// let now = Instant::now();
+    /// let f = async { Instant::now() }.boxed().delay(Duration::from_millis(10));
+    /// let future_run_ts = global_executor().run(f).unwrap();
+    /// let delay = future_run_ts - now;
+    /// assert!(delay >= Duration::from_millis(9) && delay <= Duration::from_millis(11));
+    /// ```
+    fn delay(self, duration: Duration) -> PinnedFuture<Result<Self::Output, TimerError>>;
+
     /// Allows a Future to execute for a limited amount of time.
     /// - If the future completes before the timeout has expired, then the completed value is returned.
     ///   Otherwise, a timeout error is returned
@@ -154,51 +187,32 @@ pub trait FutureTimerExt: Future {
     ///  }
     /// ```
     fn timeout(self, timeout: Duration) -> PinnedFuture<Result<Self::Output, TimeoutError>>;
-
-    /// Delays the future to run after the specified duration
-    /// - minimum timeout duration is 1 ms
-    ///
-    /// ## Example
-    /// ```
-    /// # #![feature(await_macro, async_await, futures_api, arbitrary_self_types)]
-    /// # use std::time::*;
-    /// use futures::{ compat::*, prelude::* };
-    /// use ruggine_async::{timer::*, global_executor};
-    /// let now = Instant::now();
-    /// let f = async { Instant::now() }.boxed().delay(Duration::from_millis(10));
-    /// let future_run_ts = global_executor().run(f).unwrap();
-    /// let delay = future_run_ts - now;
-    /// assert!(delay >= Duration::from_millis(9) && delay <= Duration::from_millis(11));
-    /// ```
-    fn delay(self, duration: Duration) -> PinnedFuture<Result<Self::Output, TimerError>>;
 }
 
 impl<T> FutureTimerExt for T
 where
-    T: Future + Send + std::marker::Unpin + 'static,
+    T: Future + Send + Unpin + 'static,
 {
+    fn delay(self, duration: Duration) -> PinnedFuture<Result<Self::Output, TimerError>> {
+        let delay = delay(duration);
+        async move {
+            match await!(delay.compat()) {
+                Ok(_) => Ok(await!(self)),
+                Err(err) => Err(TimerError::from(err)),
+            }
+        }
+            .boxed()
+    }
+
     fn timeout(self, duration: Duration) -> PinnedFuture<Result<Self::Output, TimeoutError>> {
         let delay = delay(duration);
-        let deadline = delay.deadline();
         let mut delay = delay.compat().fuse();
         let mut f = self.fuse();
 
         async move {
             futures::select! {
                 result = f     => Ok(result),
-                result = delay =>  Err(TimeoutError::from_delay_result(result, duration, deadline))
-            }
-        }
-            .boxed()
-    }
-
-    fn delay(self, duration: Duration) -> PinnedFuture<Result<Self::Output, TimerError>> {
-        let delay = delay(duration);
-        let deadline = delay.deadline();
-        async move {
-            match await!(delay.compat()) {
-                Ok(_) => Ok(await!(self)),
-                Err(err) => Err(TimerError::from_timer_error(err, duration, deadline)),
+                result = delay =>  Err(TimeoutError::from_delay_result(result, duration))
             }
         }
             .boxed()
@@ -210,53 +224,25 @@ where
 #[derive(Debug, Fail, Copy, Clone)]
 pub enum TimeoutError {
     /// task timed out
-    #[fail(
-        display = "Task timed out: duration = {:?}, deadline = {:?}",
-        duration, deadline
-    )]
-    Timeout {
-        /// timeout duration
-        duration: Duration,
-        /// deadline
-        deadline: Instant,
-    },
+    #[fail(display = "Task timed out after {:?}", _0)]
+    Timeout(Duration),
     /// Timer is shutdown
-    #[fail(
-        display = "Timer is shutdown: duration = {:?}, deadline = {:?}",
-        duration, deadline
-    )]
-    TimerShutdown {
-        /// timeout duration
-        duration: Duration,
-        /// deadline
-        deadline: Instant,
-    },
+    #[fail(display = "Timer is shutdown.")]
+    TimerShutdown,
     /// Timer is at capacity
-    #[fail(
-        display = "Timer is at capacity: duration = {:?}, deadline = {:?}",
-        duration, deadline
-    )]
-    TimerAtCapacity {
-        /// timeout duration
-        duration: Duration,
-        /// deadline
-        deadline: Instant,
-    },
+    #[fail(display = "Timer is at capacity.")]
+    TimerAtCapacity,
 }
 
 impl TimeoutError {
-    fn from_delay_result(
-        result: Result<(), tokio_timer::Error>,
-        duration: Duration,
-        deadline: Instant,
-    ) -> Self {
+    fn from_delay_result(result: Result<(), tokio_timer::Error>, duration: Duration) -> Self {
         match result {
-            Ok(_) => TimeoutError::Timeout { duration, deadline },
+            Ok(_) => TimeoutError::Timeout(duration),
             Err(err) => {
                 if err.is_shutdown() {
-                    TimeoutError::TimerShutdown { duration, deadline }
+                    TimeoutError::TimerShutdown
                 } else {
-                    TimeoutError::TimerAtCapacity { duration, deadline }
+                    TimeoutError::TimerAtCapacity
                 }
             }
         }
@@ -268,35 +254,19 @@ impl TimeoutError {
 #[derive(Debug, Fail, Copy, Clone)]
 pub enum TimerError {
     /// Timer is shutdown
-    #[fail(
-        display = "Timer is shutdown: duration = {:?}, deadline = {:?}",
-        duration, deadline
-    )]
-    TimerShutdown {
-        /// delay duration
-        duration: Duration,
-        /// deadline
-        deadline: Instant,
-    },
+    #[fail(display = "Timer is shutdown.")]
+    TimerShutdown,
     /// Timer is at capacity
-    #[fail(
-        display = "Timer is at capacity: duration = {:?}, deadline = {:?}",
-        duration, deadline
-    )]
-    TimerAtCapacity {
-        /// delay duration
-        duration: Duration,
-        /// deadline
-        deadline: Instant,
-    },
+    #[fail(display = "Timer is at capacity.")]
+    TimerAtCapacity,
 }
 
-impl TimerError {
-    fn from_timer_error(err: tokio_timer::Error, duration: Duration, deadline: Instant) -> Self {
+impl From<tokio_timer::Error> for TimerError {
+    fn from(err: tokio_timer::Error) -> Self {
         if err.is_shutdown() {
-            TimerError::TimerShutdown { duration, deadline }
+            TimerError::TimerShutdown
         } else {
-            TimerError::TimerAtCapacity { duration, deadline }
+            TimerError::TimerAtCapacity
         }
     }
 }
@@ -413,9 +383,68 @@ pub enum IntervalError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use futures::task::SpawnExt;
 
     fn init_logging() {
         let _ = std::panic::catch_unwind(env_logger::init);
+    }
+
+    /// Runs the future after an initial delay
+    ///
+    /// ## Notes
+    /// This is an exercise on implementing a Future from scratch.
+    /// The take away lesson is that writing futures via async / await is much more ergonomic and less
+    /// code to write.
+    #[derive(Debug)]
+    pub struct DelayedFuture<T> {
+        inner: Option<Compat01As03<tokio_timer::Delay>>,
+        future: T,
+    }
+
+    impl<T> DelayedFuture<T>
+    where
+        T: Future + Send + Unpin,
+    {
+        /// constructor
+        pub fn new(delay_duration: Duration, future: T) -> Self {
+            Self {
+                inner: Some(Compat01As03::new(delay(delay_duration))),
+                future,
+            }
+        }
+    }
+
+    impl<T> Future for DelayedFuture<T>
+    where
+        T: Future + Send + Unpin,
+    {
+        type Output = Result<T::Output, TimerError>;
+
+        fn poll(mut self: Pin<&mut Self>, waker: &Waker) -> Poll<Self::Output> {
+            match self.inner.as_mut() {
+                Some(delay) => {
+                    let poll = {
+                        let delay = Pin::new(delay);
+                        delay.poll(waker)
+                    };
+                    match poll {
+                        Poll::Pending => Poll::Pending,
+                        Poll::Ready(Ok(_)) => {
+                            self.inner.take();
+                            let future = &mut self.future;
+                            let future = Pin::new(future);
+                            future.poll(waker).map(Ok)
+                        }
+                        Poll::Ready(Err(err)) => Poll::Ready(Err(TimerError::from(err))),
+                    }
+                }
+                None => {
+                    let future = &mut self.future;
+                    let future = Pin::new(future);
+                    future.poll(waker).map(Ok)
+                }
+            }
+        }
     }
 
     #[test]
@@ -472,13 +501,61 @@ mod tests {
     }
 
     #[test]
-    fn delayed_future() {
+    fn delayed_future_ext() {
         init_logging();
         let f = async { Instant::now() }
             .boxed()
             .delay(Duration::from_millis(10));
         let now = Instant::now();
         let future_run_ts = crate::global_executor().run(f).unwrap();
+        let delay = future_run_ts - now;
+        info!(
+            "delayed_future_ext(): future result: {:?} : {:?} : {:?}",
+            future_run_ts,
+            now.elapsed(),
+            delay
+        );
+        assert!(delay >= Duration::from_millis(9) && delay <= Duration::from_millis(11));
+    }
+
+    #[test]
+    fn delayed_future() {
+        init_logging();
+        let f = async { Instant::now() }.boxed();
+        let f = DelayedFuture::new(Duration::from_millis(10), f);
+        let now = Instant::now();
+        let future_run_ts = crate::global_executor().run(f).unwrap();
+        let delay = future_run_ts - now;
+        info!(
+            "delayed_future(): future result: {:?} : {:?} : {:?}",
+            future_run_ts,
+            now.elapsed(),
+            delay
+        );
+        assert!(delay >= Duration::from_millis(9) && delay <= Duration::from_millis(11));
+    }
+
+    #[test]
+    fn delayed_sender() {
+        init_logging();
+        let (mut tx, mut rx) = futures::channel::mpsc::channel(0);
+        let mut executor = crate::global_executor();
+        let f = async move {
+            let now = Instant::now();
+            let _ = await!(tx.send(now));
+        }
+            .boxed()
+            .delay(Duration::from_millis(10));
+
+        let now = Instant::now();
+        executor
+            .spawn(
+                async move {
+                    await!(f).unwrap();
+                },
+            )
+            .unwrap();
+        let future_run_ts = executor.run(async move { await!(rx.next()) }).unwrap();
         let delay = future_run_ts - now;
         info!(
             "delayed_future(): future result: {:?} : {:?} : {:?}",
@@ -592,4 +669,5 @@ mod tests {
                 && tot_elapsed_duration <= Duration::from_millis(56)
         );
     }
+
 }
