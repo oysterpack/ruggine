@@ -224,7 +224,7 @@ where
 #[derive(Debug, Fail, Copy, Clone)]
 pub enum TimeoutError {
     /// task timed out
-    #[fail(display = "Task timed out after {:?}", _0)]
+    #[fail(display = "Timed out after {:?}", _0)]
     Timeout(Duration),
     /// Timer is shutdown
     #[fail(display = "Timer is shutdown.")]
