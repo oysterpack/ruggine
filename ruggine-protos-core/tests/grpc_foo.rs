@@ -26,7 +26,6 @@ use futures::{future::FutureResult, prelude::*, stream::Stream};
 use log::*;
 use std::{env, panic::catch_unwind};
 use tokio::{
-    executor::DefaultExecutor,
     net::{UnixListener, UnixStream},
     prelude::*,
     runtime::Runtime,

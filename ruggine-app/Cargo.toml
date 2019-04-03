@@ -1,12 +1,12 @@
 [package]
-name = "ruggine_service"
+name = "ruggine_app"
 version = "0.1.0"
 authors = ["Alfio Zappala <oysterpack.inc@gmail.com>"]
 edition = "2018"
-description = "Provides support for async execution integrated with futures"
+description = "OysterPack ruggine application model"
 license = "MIT/Apache-2.0"
 repository = "https://github.com/oysterpack/ruggine"
-homepage = "https://github.com/oysterpack/ruggine/tree/master/ruggine-protos-core"
+homepage = "https://github.com/oysterpack/ruggine/tree/master/ruggine-app"
 readme = "README.md"
 keywords = ["futures","async", "parallel"]
 categories = ["concurrency"]

@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+import "protos/messages/app_v1.proto";
+
+option optimize_for = SPEED;
+
+package oysterpack.ruggine.protos.core.services.app.v1;
+
+// App service
+service AppService {
+    // returns app info
+    rpc AppInfo(AppInfoRequest) returns (AppInfoResponse);
+}
+
+// App info request
+message AppInfoRequest {}
+
+// App info response
+message AppInfoResponse {
+    // App
+    oysterpack.ruggine.protos.core.messages.app.v1.App app = 1;
+}

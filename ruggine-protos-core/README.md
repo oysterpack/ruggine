@@ -23,36 +23,51 @@ The directory structure is self explanatory:
 - **services** directory defines all grpc services
   - each file in the directory is a separate package, i.e., maps to its own module
   - base package name: **oysterpack.ruggine.protos.core.services**
+
+### Notes
 - all proto packages are versioned
-- **NOTE:** messages are separated from services because messages can be re-used across services
+- messages are separated from services because messages can be re-used across services
   
 ## src directory structure
 <pre>
-|-src
-  |-messages
-    |-foo.rs
-    |-foo
-      |-v1.rs
-    |-bar.rs
-      |-v1.rs
-      |-v2.rs
-    |-...
-  |-services
-    |-foo.rs
-      |-v1.rs
-    |-bar.rs
-      |-v2.rs
-    |-...  
-  |-lib.rs
-  |-messages.rs
-  |-protos.rs
-  |-services.rs
+|-[src]
+  |-[protos]
+    |-[messages]
+      |-foo.rs
+      |-[foo]
+        |-v1.rs
+      |-bar.rs
+        |-v1.rs
+        |-v2.rs
+      |-...
+    |-[services]
+      |-foo.rs
+      |-[foo]
+        |-v1.rs
+        |-[v1]
+          |-server.rs
+          |-client.rs
+      |-bar.rs
+      |-[bar]
+        |-v1.rs
+        |-[v1]
+          |-server.rs
+          |-client.rs
+      |-...  
+    |-lib.rs
+    |-messages.rs
+    |-protos.rs
+    |-services.rs
 </pre>
 
 - **protos** module contains the Protobuf / gRPC generated code
 - **messages** contains higher level application business logic code that is layered on top of low level protobuf messages
   - e.g., validation rules, constructors, conversions, etc
-- **services** gRPC service implementations 
+- **services** gRPC service implementations
+  - servers and clients are in separate modules
+  - each service is feature gated at the server and client level using the following feature naming conventions: 
+    - `{service}-{ver}-server` - e.g., `foo-v1-server`
+    - `{service}-{ver}-client` - e.g., `bar-v1-client`
 
 ## How to share centrally managed gRPC Protobuf schemas
 External git projects can import the schemas using the [git-subrepo](https://github.com/ingydotnet/git-subrepo) technique.

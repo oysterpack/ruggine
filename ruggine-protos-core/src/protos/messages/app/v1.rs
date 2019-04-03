@@ -23,11 +23,10 @@ include!(concat!(
 
 // TODO: App!()
 // - generate a lazy static App
-// - use procedural macro
 
-/// PackageId constructor that is initialized via [cargo provided environment variables](https://doc.rust-lang.org/cargo/reference/environment-variables.html#environment-variables-cargo-sets-for-crates):
-/// - `CARGO_PKG_NAME`
-/// - `CARGO_PKG_VERSION`
+/// [PackageId](protos/messages/app/v1/struct.PackageId.html) constructor that is initialized via [cargo provided environment variables](https://doc.rust-lang.org/cargo/reference/environment-variables.html#environment-variables-cargo-sets-for-crates):
+/// - CARGO_PKG_NAME
+/// - CARGO_PKG_VERSION
 ///
 /// ## Example
 /// ```
@@ -44,7 +43,13 @@ macro_rules! package_id {
     };
 }
 
-/// Package constructor that is initialized via [cargo provided environment variables](https://doc.rust-lang.org/cargo/reference/environment-variables.html#environment-variables-cargo-sets-for-crates):
+/// [Package](protos/messages/app/v1/struct.Package.html) constructor that is initialized via [cargo provided environment variables](https://doc.rust-lang.org/cargo/reference/environment-variables.html#environment-variables-cargo-sets-for-crates):
+/// - CARGO_PKG_NAME
+/// - CARGO_PKG_VERSION
+/// - CARGO_PKG_AUTHORS
+/// - CARGO_PKG_DESCRIPTION
+/// - CARGO_PKG_HOMEPAGE
+/// - CARGO_PKG_REPOSITORY
 ///
 /// ## Example
 /// ```

@@ -14,7 +14,6 @@
  *    limitations under the License.
  */
 
-//! contains gRPC Protobuf generated code
+//! App grpc service
 
-pub mod messages;
-pub mod services;
+pub mod v1;

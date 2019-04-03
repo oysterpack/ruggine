@@ -61,7 +61,23 @@ fn generate_message_protobufs() {
         .type_attribute(
             "oysterpack.ruggine.protos.core.messages.time.v1.Timestamp",
             r#"#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]"#,
-        );
+        )
+        .type_attribute(
+            "oysterpack.ruggine.protos.core.services.app.v1.AppRequest",
+            "#[derive(Eq)]",
+        )
+        .type_attribute(
+            "oysterpack.ruggine.protos.core.services.app.v1.AppRequest",
+            r#"#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]"#,
+        )
+        .type_attribute(
+            "oysterpack.ruggine.protos.core.services.app.v1.AppResponse",
+            "#[derive(Eq)]",
+        )
+        .type_attribute(
+            "oysterpack.ruggine.protos.core.services.app.v1.AppResponse",
+            r#"#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]"#,
+        );;
 
     tower_grpc_build::Config::from_prost(config)
         .enable_client(true)
@@ -71,10 +87,11 @@ fn generate_message_protobufs() {
                 "protos/messages/app_v1.proto",
                 "protos/messages/time_v1.proto",
                 "protos/messages/ulid_v1.proto",
+                "protos/services/app_v1.proto",
             ],
-            &["protos/messages"],
+            &["."],
         )
-        .unwrap_or_else(|e| panic!("protobuf compilation failed: {}", e));
+        .unwrap_or_else(|e| panic!("generate_message_protobufs() failed: {}", e));
 }
 
 fn generate_tests_grpc_code() {
@@ -82,5 +99,5 @@ fn generate_tests_grpc_code() {
         .enable_client(true)
         .enable_server(true)
         .build(&["tests/protos/foo.proto"], &["tests/protos"])
-        .unwrap_or_else(|e| panic!("protobuf compilation failed: {}", e));
+        .unwrap_or_else(|e| panic!("generate_tests_grpc_code() failed: {}", e));
 }

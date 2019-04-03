@@ -14,7 +14,8 @@
  *    limitations under the License.
  */
 
-//! contains gRPC Protobuf generated code
+//! grpc services
 
-pub mod messages;
-pub mod services;
+#![allow(missing_docs, missing_debug_implementations)]
+
+pub mod app;
