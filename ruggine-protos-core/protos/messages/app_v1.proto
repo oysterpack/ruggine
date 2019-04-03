@@ -1,7 +1,7 @@
 syntax = "proto3";
 
-import "protos/messages/ulid_v1.proto";
-import "protos/messages/time_v1.proto";
+import "ruggine-protos-core/protos/messages/ulid_v1.proto";
+import "ruggine-protos-core/protos/messages/time_v1.proto";
 
 option optimize_for = SPEED;
 

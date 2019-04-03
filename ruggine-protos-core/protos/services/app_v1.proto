@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-import "protos/messages/app_v1.proto";
+import "ruggine-protos-core/protos/messages/app_v1.proto";
 
 option optimize_for = SPEED;
 

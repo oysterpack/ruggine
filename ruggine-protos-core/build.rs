@@ -77,19 +77,19 @@ fn generate_message_protobufs() {
         .type_attribute(
             "oysterpack.ruggine.protos.core.services.app.v1.AppResponse",
             r#"#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]"#,
-        );;
+        );
 
     tower_grpc_build::Config::from_prost(config)
-        .enable_client(true)
-        .enable_server(true)
+        .enable_client(false)
+        .enable_server(false)
         .build(
             &[
-                "protos/messages/app_v1.proto",
-                "protos/messages/time_v1.proto",
-                "protos/messages/ulid_v1.proto",
-                "protos/services/app_v1.proto",
+                "ruggine-protos-core/protos/messages/app_v1.proto",
+                "ruggine-protos-core/protos/messages/time_v1.proto",
+                "ruggine-protos-core/protos/messages/ulid_v1.proto",
+                "ruggine-protos-core/protos/services/app_v1.proto",
             ],
-            &["."],
+            &[".."],
         )
         .unwrap_or_else(|e| panic!("generate_message_protobufs() failed: {}", e));
 }
