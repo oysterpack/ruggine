@@ -1,10 +1,17 @@
 [package]
-name = "ruggine-app-service"
+name = "ruggine_app_service"
 version = "0.1.0"
-authors = ["Alfio Zappala <oysterpack2016@gmail.com>"]
+authors = ["Alfio Zappala <oysterpack.inc@gmail.com>"]
 edition = "2018"
+description = "ruggine App grpc service"
+license = "MIT/Apache-2.0"
+repository = "https://github.com/oysterpack/ruggine"
+homepage = "https://github.com/oysterpack/ruggine/tree/master/services/ruggine-app-service"
+readme = "README.md"
+keywords = ["grpc"]
 
 [dependencies]
+ruggine_async = {path = "../../ruggine-async", version = "0.1"}
 ruggine_protos_core = {path = "../../ruggine-protos-core", version = "0.1"}
 prost = "0.5.0"
 prost-types = "0.5.0"

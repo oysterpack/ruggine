@@ -35,7 +35,7 @@ fn generate_gprc_server() {
         );
 
     tower_grpc_build::Config::from_prost(config)
-        .enable_client(false)
+        .enable_client(true)
         .enable_server(true)
         .build(
             &["services/ruggine-app-service/protos/services/app_v1.proto"],

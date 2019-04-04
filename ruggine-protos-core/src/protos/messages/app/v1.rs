@@ -89,9 +89,9 @@ macro_rules! package {
     }};
 }
 
-/// Defines a `PROCESS` lazy static for [Process](protos/messages/app/v1/struct.Process.html).
-/// A unique instance ID is assigned. The lazy static should be defined at application startup
 lazy_static::lazy_static! {
+    /// Defines a `PROCESS` lazy static for [Process](protos/messages/app/v1/struct.Process.html).
+    /// A unique instance ID is assigned. The lazy static should be defined at application startup
     static ref PROCESS: Process = Process {
         pid: std::process::id(),
         start_time: Some(chrono::Utc::now().into()),
@@ -99,6 +99,8 @@ lazy_static::lazy_static! {
 }
 
 /// The process is assigned a unique instance id.
+/// - this will lazily load and cache the Process. Thus, in order for the process start time to be
+///   accurate, this should be the first function invoked in the app's main()
 pub fn process() -> Process {
     *PROCESS
 }

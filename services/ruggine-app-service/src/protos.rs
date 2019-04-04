@@ -14,12 +14,6 @@
  *    limitations under the License.
  */
 
-//! ruggine-app-service
+//! contains gRPC Protobuf generated code
 
-#![feature(await_macro, async_await, futures_api, arbitrary_self_types)]
-#![deny(clippy::all)]
-#![allow(clippy::unreadable_literal)]
-#![deny(missing_docs, missing_debug_implementations)]
-#![doc(html_root_url = "https://docs.rs/ruggine_app_service/0.1.0")]
-
-pub mod protos;
+pub mod services;

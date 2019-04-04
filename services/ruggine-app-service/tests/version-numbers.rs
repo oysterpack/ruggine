@@ -14,12 +14,10 @@
  *    limitations under the License.
  */
 
-//! ruggine-app-service
+#[macro_use]
+extern crate version_sync;
 
-#![feature(await_macro, async_await, futures_api, arbitrary_self_types)]
-#![deny(clippy::all)]
-#![allow(clippy::unreadable_literal)]
-#![deny(missing_docs, missing_debug_implementations)]
-#![doc(html_root_url = "https://docs.rs/ruggine_app_service/0.1.0")]
-
-pub mod protos;
+#[test]
+fn test_html_root_url() {
+    assert_html_root_url_updated!("src/lib.rs");
+}
