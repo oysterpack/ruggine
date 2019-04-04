@@ -38,7 +38,6 @@ message PackageId {
 }
 
 // Process info
-// TODO: add process metric fields
 message Process {
     // OS-assigned process identifier
     uint32 pid = 1;

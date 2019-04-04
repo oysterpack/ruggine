@@ -38,7 +38,7 @@ fn generate_gprc_server() {
         .enable_client(false)
         .enable_server(true)
         .build(
-            &["ruggine-protos-core/protos/services/app_v1.proto"],
+            &["services/ruggine-app-service/protos/services/app_v1.proto"],
             &["../.."],
         )
         .unwrap_or_else(|e| panic!("generate_message_protobufs() failed: {}", e));

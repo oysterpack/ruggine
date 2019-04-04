@@ -14,6 +14,6 @@
  *    limitations under the License.
  */
 
-//! contains gRPC Protobuf generated code
+//! ruggine-app-service
 
-pub mod messages;
+pub mod protos;

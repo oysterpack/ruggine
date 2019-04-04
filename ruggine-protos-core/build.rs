@@ -47,6 +47,14 @@ fn generate_message_protobufs() {
             r#"#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]"#,
         )
         .type_attribute(
+            "oysterpack.ruggine.protos.core.messages.app.v1.Process",
+            "#[derive(Eq, Hash, Ord, PartialOrd, Copy)]",
+        )
+        .type_attribute(
+            "oysterpack.ruggine.protos.core.messages.app.v1.Process",
+            r#"#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]"#,
+        )
+        .type_attribute(
             "oysterpack.ruggine.protos.core.messages.ulid.v1.Ulid",
             "#[derive(Eq, Hash, Copy, Ord, PartialOrd)]",
         )
@@ -56,26 +64,10 @@ fn generate_message_protobufs() {
         )
         .type_attribute(
             "oysterpack.ruggine.protos.core.messages.time.v1.Timestamp",
-            "#[derive(Eq, Hash, Ord, PartialOrd)]",
+            "#[derive(Eq, Hash, Ord, PartialOrd, Copy)]",
         )
         .type_attribute(
             "oysterpack.ruggine.protos.core.messages.time.v1.Timestamp",
-            r#"#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]"#,
-        )
-        .type_attribute(
-            "oysterpack.ruggine.protos.core.services.app.v1.AppRequest",
-            "#[derive(Eq)]",
-        )
-        .type_attribute(
-            "oysterpack.ruggine.protos.core.services.app.v1.AppRequest",
-            r#"#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]"#,
-        )
-        .type_attribute(
-            "oysterpack.ruggine.protos.core.services.app.v1.AppResponse",
-            "#[derive(Eq)]",
-        )
-        .type_attribute(
-            "oysterpack.ruggine.protos.core.services.app.v1.AppResponse",
             r#"#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]"#,
         );
 
@@ -87,7 +79,6 @@ fn generate_message_protobufs() {
                 "ruggine-protos-core/protos/messages/app_v1.proto",
                 "ruggine-protos-core/protos/messages/time_v1.proto",
                 "ruggine-protos-core/protos/messages/ulid_v1.proto",
-                "ruggine-protos-core/protos/services/app_v1.proto",
             ],
             &[".."],
         )

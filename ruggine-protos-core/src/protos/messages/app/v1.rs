@@ -21,8 +21,22 @@ include!(concat!(
     "/oysterpack.ruggine.protos.core.messages.app.v1.rs"
 ));
 
-// TODO: App!()
-// - generate a lazy static App
+/// [App](protos/messages/app/v1/struct.App.html) constructor, which assigns a unique instance ID.
+///
+/// ## Example
+/// ```
+/// # use ruggine_protos_core::app;
+/// let app = app!();
+/// ```
+#[macro_export]
+macro_rules! app {
+    () => {
+        $crate::protos::messages::app::v1::App {
+            package: Some($crate::package!()),
+            instance_id: Some(rusty_ulid::Ulid::generate().into()),
+        }
+    };
+}
 
 /// [PackageId](protos/messages/app/v1/struct.PackageId.html) constructor that is initialized via [cargo provided environment variables](https://doc.rust-lang.org/cargo/reference/environment-variables.html#environment-variables-cargo-sets-for-crates):
 /// - CARGO_PKG_NAME
@@ -75,6 +89,20 @@ macro_rules! package {
     }};
 }
 
+/// Defines a `PROCESS` lazy static for [Process](protos/messages/app/v1/struct.Process.html).
+/// A unique instance ID is assigned. The lazy static should be defined at application startup
+lazy_static::lazy_static! {
+    static ref PROCESS: Process = Process {
+        pid: std::process::id(),
+        start_time: Some(chrono::Utc::now().into()),
+    };
+}
+
+/// The process is assigned a unique instance id.
+pub fn process() -> Process {
+    *PROCESS
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -113,5 +141,37 @@ mod tests {
         assert_eq!(pkg.description, env!("CARGO_PKG_DESCRIPTION").to_string());
         assert_eq!(pkg.homepage, env!("CARGO_PKG_HOMEPAGE").to_string());
         assert_eq!(pkg.repository, env!("CARGO_PKG_REPOSITORY").to_string());
+    }
+
+    #[test]
+    fn app_macro() {
+        let _ = catch_unwind(env_logger::init);
+
+        let app = app!();
+        info!("{:#?}", app);
+
+        let pkg = app.package.expect("package is not set");
+        for pkg_id in pkg.id.as_ref() {
+            let id = PackageId {
+                name: env!("CARGO_PKG_NAME").to_string(),
+                version: env!("CARGO_PKG_VERSION").to_string(),
+            };
+            assert_eq!(pkg_id, &id);
+        }
+
+        let _ = app.instance_id.expect("instance_id is not set");
+    }
+
+    #[test]
+    fn process_macro() {
+        let _ = catch_unwind(env_logger::init);
+
+        let now = chrono::Utc::now();
+        let process = process();
+        info!("{:#?}", process);
+        assert!(process.pid > 0);
+        let start_time = process.start_time.expect("start_time is not set");
+        let start_time: chrono::DateTime<chrono::Utc> = start_time.into();
+        assert!(start_time >= now);
     }
 }
