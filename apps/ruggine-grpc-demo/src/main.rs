@@ -24,7 +24,7 @@ fn main() {
     let app = ruggine_protos_core::app!();
     let executor = ruggine_async::global_executor();
     let port = 50501;
-    let (server, handle) =
+    let (server, _handle) =
         ruggine_app_service::protos::services::app::v1::grpc_server(app, executor, port);
 
     let _ = ruggine_async::global_executor().run(server);

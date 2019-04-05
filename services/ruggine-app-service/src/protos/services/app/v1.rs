@@ -121,7 +121,7 @@ pub fn grpc_server(
     let h2_settings = Default::default();
     let mut h2 = tower_h2::Server::new(new_service, h2_settings, executor.clone().compat());
 
-    let addr = format!("127.0.0.1:{}", port);
+    let addr = format!("0.0.0.0:{}", port);
     let addr = addr.parse().unwrap();
     let bind = tokio::net::tcp::TcpListener::bind(&addr).expect("bind");
 
@@ -162,9 +162,9 @@ mod tests {
     use super::*;
     use std::panic::catch_unwind;
     use tower::MakeService;
-    use std::time::Duration;
 
     struct TcpStreamConnect {
+        host: String,
         port: u16
     }
 
@@ -178,9 +178,9 @@ mod tests {
         }
 
         fn call(&mut self, _: ()) -> Self::Future {
-            tokio::net::tcp::TcpStream::connect(&([127, 0, 0, 1], self.port).into())
-//            let addr = format!("127.0.0.1:{}", self.port).parse().unwrap();
-//            tokio::net::tcp::TcpStream::connect(&addr)
+//            tokio::net::tcp::TcpStream::connect(&([127, 0, 0, 1], self.port).into())
+            let addr = format!("{}:{}",self.host, self.port).parse().unwrap();
+            tokio::net::tcp::TcpStream::connect(&addr)
         }
     }
 
@@ -190,12 +190,13 @@ mod tests {
         let app = ruggine_protos_core::app!();
         info!("{:#?}", app);
 
-        let port = 50500;
+        let host = "127.0.0.1";
+        let port = 50501;
         let server_handle = spawn_server(app,  ruggine_async::global_executor(), port);
 
         let h2_settings = Default::default();
         let mut make_client = tower_h2::client::Connect::new(
-            TcpStreamConnect { port: port as u16 },
+            TcpStreamConnect { host: host.to_string(),  port: port as u16 },
             h2_settings,
             ruggine_async::global_executor().compat(),
         );
@@ -219,6 +220,6 @@ mod tests {
         });
         info!("response: {:#?}", response);
 
-         server_handle.abort();
+//         server_handle.abort();
     }
 }
