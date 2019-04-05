@@ -1,0 +1,26 @@
+[package]
+name = "ruggine_grpc_demo"
+version = "0.1.0"
+authors = ["Alfio Zappala <oysterpack2016@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+ruggine_async = {path = "../../ruggine-async", version = "0.1"}
+ruggine_protos_core = {path = "../../ruggine-protos-core", version = "0.1"}
+ruggine_app_service = {path="../../services/ruggine-app-service", version = "0.1"}
+
+tower-grpc = { git = "https://github.com/tower-rs/tower-grpc"}
+tower-h2 = { git = "https://github.com/tower-rs/tower-h2" }
+tower = {git = "https://github.com/tower-rs/tower"}
+
+log = "0.4.6"
+env_logger = "0.6.1"
+
+tokio = "0.1"
+tokio-buf = "0.1.0"
+futures = "0.1"
+
+rusty_ulid = "0.8.0"
+
+[dev-dependencies]
+version-sync = "0.7.0"
