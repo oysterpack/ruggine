@@ -19,7 +19,7 @@ use std::{
     panic::catch_unwind,
     time::{Duration, Instant},
 };
-use tokio::{prelude::*, timer::Delay};
+use tokio::timer::Delay;
 
 #[test]
 fn delay_futures01() {

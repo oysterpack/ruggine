@@ -1,5 +1,5 @@
 [package]
-name = "ruggine_grpc_demo"
+name = "ruggine_grpc_app_service_server"
 version = "0.1.0"
 authors = ["Alfio Zappala <oysterpack2016@gmail.com>"]
 edition = "2018"
@@ -12,6 +12,7 @@ ruggine_app_service = {path="../../services/ruggine-app-service", version = "0.1
 tower-grpc = { git = "https://github.com/tower-rs/tower-grpc"}
 tower-h2 = { git = "https://github.com/tower-rs/tower-h2" }
 tower = {git = "https://github.com/tower-rs/tower"}
+tower-add-origin = { git = "https://github.com/tower-rs/tower-http" }
 
 log = "0.4.6"
 env_logger = "0.6.1"

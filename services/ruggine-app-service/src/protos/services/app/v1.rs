@@ -16,12 +16,10 @@
 
 //! App grpc service: oysterpack.ruggine.protos.core.services.app.v1.App
 
+use futures03::{compat::*, prelude::*, task::SpawnExt};
+use log::*;
 use ruggine_async::futures as futures03;
 use ruggine_protos_core::protos::messages::app::v1::App;
-use futures03::{
-    compat::*, prelude::*, task::SpawnExt
-};
-use log::*;
 
 include!(concat!(
     env!("OUT_DIR"),
@@ -60,62 +58,30 @@ pub fn spawn_server(
     mut executor: futures03::executor::ThreadPool,
     port: usize,
 ) -> futures03::future::AbortHandle {
-
-    let new_service = new_server(app);
-
-    let h2_settings = Default::default();
-    let mut h2 = tower_h2::Server::new(new_service, h2_settings, executor.clone().compat());
-
-    let addr = format!("127.0.0.1:{}", port);
-    let addr = addr.parse().unwrap();
-    let bind = tokio::net::tcp::TcpListener::bind(&addr).expect("bind");
-
-    let server_task = {
-        let mut executor = executor.clone();
-        async move {
-            info!("Server is running ...");
-            let mut incoming = bind.incoming().compat();
-            while let Some(sock) = await!(incoming.next()) {
-                match sock {
-                    Ok(sock) => {
-                        let serve = h2.serve(sock).compat();
-                        let spawn_result = executor.spawn(
-                            async move {
-                                if let Err(err) = await!(serve) {
-                                    error!("h2.serve() error: {:?}", err)
-                                }
-                            },
-                        );
-                        if let Err(err) = spawn_result {
-                            // should never happen
-                            error!("failed to spawn task to serve h2 connection: {:?}", err)
-                        }
-                    }
-                    Err(err) => error!("socket connection error: {:?}", err),
-                }
-            }
-            info!("server is stopped");
-        }
-    };
-
-    let (abortable_server_task, abort_handle) = futures03::future::abortable(server_task);
+    let (abortable_server_task, abort_handle) = grpc_server(app, executor.clone(), port);
     executor
-        .spawn(async move {
-            if let Err(_aborted) = await!(abortable_server_task) {
-                info!("Server was aborted");
-            }
-        })
+        .spawn(
+            async move {
+                if let Err(_aborted) = await!(abortable_server_task) {
+                    info!("Server was aborted");
+                }
+            },
+        )
         .expect("failed to spawn server task");
     abort_handle
 }
 
 /// Create grpc server future
+/// TODO: track number of connections
+/// TODO: limit the number of connections
 pub fn grpc_server(
     app: App,
     executor: futures03::executor::ThreadPool,
     port: usize,
-) -> (futures03::future::Abortable<impl futures03::Future<Output = ()>>, futures03::future::AbortHandle) {
-
+) -> (
+    futures03::future::Abortable<impl futures03::Future<Output = ()>>,
+    futures03::future::AbortHandle,
+) {
     let new_service = new_server(app);
 
     let h2_settings = Default::default();
@@ -160,12 +126,12 @@ pub fn grpc_server(
 mod tests {
 
     use super::*;
-    use std::panic::catch_unwind;
+    use std::{panic::catch_unwind, thread};
     use tower::MakeService;
 
     struct TcpStreamConnect {
         host: String,
-        port: u16
+        port: u16,
     }
 
     impl tower::Service<()> for TcpStreamConnect {
@@ -178,10 +144,45 @@ mod tests {
         }
 
         fn call(&mut self, _: ()) -> Self::Future {
-//            tokio::net::tcp::TcpStream::connect(&([127, 0, 0, 1], self.port).into())
-            let addr = format!("{}:{}",self.host, self.port).parse().unwrap();
+            //            tokio::net::tcp::TcpStream::connect(&([127, 0, 0, 1], self.port).into())
+            let addr = format!("{}:{}", self.host, self.port).parse().unwrap();
             tokio::net::tcp::TcpStream::connect(&addr)
         }
+    }
+
+    /// used a macro here because when trying to return super::client::AppService<T>, the compiler requires
+    /// T to be explicitly defined because of the
+    macro_rules! client {
+        (host = $host:expr, port = $port:expr) => {
+            {
+                let host = $host;
+                let port = $port;
+
+                let h2_settings = Default::default();
+                let mut make_client = tower_h2::client::Connect::new(
+                    TcpStreamConnect {
+                        host: host.to_string(),
+                        port: port as u16,
+                    },
+                    h2_settings,
+                    ruggine_async::global_executor().compat(),
+                );
+                let conn = make_client.make_service(());
+                let client_task = async move {
+                    let conn = await!(conn.compat()).unwrap();
+                    // the origin header is required by the http2 protocol - without it, the connection is rejected
+                    let conn_with_origin = tower_add_origin::Builder::new()
+//                        .uri(format!("http://localhost:{}", port))
+                        .uri("http://localhost")
+                        .build(conn)
+                        .unwrap();
+                    super::client::AppService::new(conn_with_origin)
+                };
+
+                let mut executor = ruggine_async::global_executor();
+                executor.run(client_task)
+            }
+        };
     }
 
     #[test]
@@ -192,34 +193,51 @@ mod tests {
 
         let host = "127.0.0.1";
         let port = 50501;
-        let server_handle = spawn_server(app,  ruggine_async::global_executor(), port);
+        let server_handle = spawn_server(app, ruggine_async::global_executor(), port);
 
-        let h2_settings = Default::default();
-        let mut make_client = tower_h2::client::Connect::new(
-            TcpStreamConnect { host: host.to_string(),  port: port as u16 },
-            h2_settings,
-            ruggine_async::global_executor().compat(),
-        );
-        let conn = make_client.make_service(());
-        let client_task = async move {
-            let conn = await!(conn.compat()).unwrap();
-            // the origin header is required by the http2 protocol - without it, the connection is rejected
-            let conn_with_origin = tower_add_origin::Builder::new()
-                .uri(format!("http://localhost:{}", port))
-                .build(conn)
-                .unwrap();
-            super::client::AppService::new(conn_with_origin)
-        };
-
+        let mut client = client!(host = host, port = port);
         let mut executor = ruggine_async::global_executor();
-        let mut client = executor.run(client_task);
 
-        let response_future = client.app_info(tower_grpc::Request::new(super::AppInfoRequest{}));
-        let response = executor.run(async move {
-           await!(response_future.compat())
-        });
+        let response_future = client.app_info(tower_grpc::Request::new(super::AppInfoRequest {}));
+        let response = executor.run(async move { await!(response_future.compat()) });
         info!("response: {:#?}", response);
 
-//         server_handle.abort();
+        server_handle.abort();
+    }
+
+    #[test]
+    fn app_service_grpc_abort_server() {
+        let _ = catch_unwind(env_logger::init);
+        let app = ruggine_protos_core::app!();
+        info!("{:#?}", app);
+
+        let host = "127.0.0.1";
+        let port = 50502;
+        let server_handle = spawn_server(app, ruggine_async::global_executor(), port);
+
+        let mut client = client!(host = host, port = port);
+        let mut executor = ruggine_async::global_executor();
+
+        let response_future = client.app_info(tower_grpc::Request::new(super::AppInfoRequest {}));
+        let response = executor.run(async move { await!(response_future.compat()) });
+        info!("response: {:#?}", response);
+
+        server_handle.abort();
+        thread::yield_now();
+
+        let response_future = client.app_info(tower_grpc::Request::new(super::AppInfoRequest {}));
+        let response = executor.run(async move { await!(response_future.compat()) });
+        info!("response: {:#?}", response);
+        // TODO: BUG: the top level server task is aborted, which means no further connections can be made.
+        // However, cany pre-existing client connections will still continue to be served as long as the client is connected.
+        assert!(response.is_err(), "the server should have stopped");
+    }
+
+    #[test]
+    fn socket_addr_dns_resolve() {
+        let _ = catch_unwind(env_logger::init);
+        use std::net::ToSocketAddrs;
+        let addrs = "www.google.com:80".to_socket_addrs();
+        info!("addrs: {:#?}", addrs);
     }
 }
