@@ -151,16 +151,14 @@ mod test {
 
         let (tx, rx) = futures::channel::oneshot::channel();
         executor
-            .spawn(
-                async move {
-                    let sum = await!(foo.apply((1_usize, 2_usize))).unwrap();
-                    let msg = await!(<Foo as Unary<String, usize>>::apply(
-                        &mut foo,
-                        sum.to_string()
-                    ));
-                    tx.send(msg).expect("Failed to send response");
-                },
-            )
+            .spawn(async move {
+                let sum = await!(foo.apply((1_usize, 2_usize))).unwrap();
+                let msg = await!(<Foo as Unary<String, usize>>::apply(
+                    &mut foo,
+                    sum.to_string()
+                ));
+                tx.send(msg).expect("Failed to send response");
+            })
             .expect("Failed to spawn task");
         let rep = executor.run(rx).unwrap();
         println!("rep = {:?}", rep);
@@ -220,14 +218,12 @@ mod test {
 
         let mut foo = Foo;
         let mut executor = crate::global_executor();
-        executor.run(
-            async move {
-                let mut rep_stream = foo.apply(3);
-                while let Some(n) = await!(rep_stream.next()) {
-                    info!("n = {}", n);
-                }
-            },
-        );
+        executor.run(async move {
+            let mut rep_stream = foo.apply(3);
+            while let Some(n) = await!(rep_stream.next()) {
+                info!("n = {}", n);
+            }
+        });
     }
 
     #[test]
@@ -242,16 +238,14 @@ mod test {
             fn apply(&mut self, mut req: Self::ReqStream) -> Self::RepStream {
                 let (mut tx, rx) = futures::channel::mpsc::channel(0);
                 crate::global_executor()
-                    .spawn(
-                        async move {
-                            while let Some(n) = await!(req.next()) {
-                                info!("received request msg: n = {}", n);
-                                if await!(tx.send(n * 2)).is_err() {
-                                    break;
-                                }
+                    .spawn(async move {
+                        while let Some(n) = await!(req.next()) {
+                            info!("received request msg: n = {}", n);
+                            if await!(tx.send(n * 2)).is_err() {
+                                break;
                             }
-                        },
-                    )
+                        }
+                    })
                     .unwrap();
                 rx.boxed()
             }
@@ -262,12 +256,10 @@ mod test {
         let mut foo = Foo;
         let mut executor = crate::global_executor();
         let mut rep_stream = foo.apply(stream::iter(vec![1_u64, 2, 3]).boxed());
-        executor.run(
-            async move {
-                while let Some(n) = await!(rep_stream.next()) {
-                    info!("n = {}", n);
-                }
-            },
-        );
+        executor.run(async move {
+            while let Some(n) = await!(rep_stream.next()) {
+                info!("n = {}", n);
+            }
+        });
     }
 }

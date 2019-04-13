@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # Unique key of the Deployment instance
+  name: ruggine-grpc-app-service-server
+spec:
+  selector:
+    matchLabels:
+      app: ruggine-grpc-app-service-server
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        # Apply this label to pods and default
+        # the Deployment label selector to this value
+        app: ruggine-grpc-app-service-server
+    spec:
+      containers:
+        - name: ruggine-grpc-app-service-server
+          # Run this image
+          image: localhost:32000/ruggine-grpc-app-service-server

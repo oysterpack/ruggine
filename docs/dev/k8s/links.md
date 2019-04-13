@@ -1,0 +1,1 @@
+- [kubectl docs](https://kubectl.docs.kubernetes.io/)

@@ -20,3 +20,16 @@
 #![deny(missing_docs, missing_debug_implementations, warnings)]
 
 //! sandbox
+
+mod tests {
+
+    #[test]
+    fn quick_test() -> Result<(), failure::Error> {
+        fn foo() -> Result<(), failure::Error> {
+            Ok(())
+        }
+
+        let _ = foo()?;
+        foo()
+    }
+}

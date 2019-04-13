@@ -180,8 +180,8 @@ fn grpc_poc() {
         .make_service(())
         .map(move |conn| {
             // the origin header is required by the http2 protocol - without it, the connection is rejected
-            let conn = tower_add_origin::Builder::new()
-                .uri(format!("https://{}", rusty_ulid::Ulid::generate()))
+            let conn = tower_request_modifier::Builder::new()
+                .set_origin("http://localhost")
                 .build(conn)
                 .unwrap();
             foo::client::Foo::new(conn)

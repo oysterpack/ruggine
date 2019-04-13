@@ -14,7 +14,7 @@ prost-types = "0.5.0"
 tower-grpc = { git = "https://github.com/tower-rs/tower-grpc"}
 tower-h2 = { git = "https://github.com/tower-rs/tower-h2" }
 tower = {git = "https://github.com/tower-rs/tower"}
-tower-add-origin = { git = "https://github.com/tower-rs/tower-http" }
+tower-request-modifier = { git = "https://github.com/tower-rs/tower-http" }
 
 bytes = "0.4.12"
 log = "0.4.6"
@@ -27,6 +27,7 @@ rusty_ulid = "0.8.0"
 chrono = "0.4.6"
 serde = { version = "1.0", optional = true, features = ["derive"] }
 parking_lot = {version ="0.7.1", features = ["nightly"] }
+failure = "0.1.5"
 
 [dev-dependencies]
 version-sync = "0.7.0"

@@ -60,13 +60,11 @@ pub fn spawn_server(
 ) -> futures03::future::AbortHandle {
     let (abortable_server_task, abort_handle) = grpc_server(app, executor.clone(), port);
     executor
-        .spawn(
-            async move {
-                if let Err(_aborted) = await!(abortable_server_task) {
-                    info!("Server was aborted");
-                }
-            },
-        )
+        .spawn(async move {
+            if let Err(_aborted) = await!(abortable_server_task) {
+                info!("Server was aborted");
+            }
+        })
         .expect("failed to spawn server task");
     abort_handle
 }
@@ -100,13 +98,11 @@ pub fn grpc_server(
                 match sock {
                     Ok(sock) => {
                         let serve = h2.serve(sock).compat();
-                        let spawn_result = executor.spawn(
-                            async move {
-                                if let Err(err) = await!(serve) {
-                                    error!("h2.serve() error: {:?}", err)
-                                }
-                            },
-                        );
+                        let spawn_result = executor.spawn(async move {
+                            if let Err(err) = await!(serve) {
+                                error!("h2.serve() error: {:?}", err)
+                            }
+                        });
                         if let Err(err) = spawn_result {
                             // should never happen
                             error!("failed to spawn task to serve h2 connection: {:?}", err)
@@ -171,9 +167,8 @@ mod tests {
                 let client_task = async move {
                     let conn = await!(conn.compat()).unwrap();
                     // the origin header is required by the http2 protocol - without it, the connection is rejected
-                    let conn_with_origin = tower_add_origin::Builder::new()
-//                        .uri(format!("http://localhost:{}", port))
-                        .uri("http://localhost")
+                    let conn_with_origin = tower_request_modifier::Builder::new()
+                        .set_origin("http://localhost")
                         .build(conn)
                         .unwrap();
                     super::client::AppService::new(conn_with_origin)

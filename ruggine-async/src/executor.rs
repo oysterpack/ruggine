@@ -76,36 +76,28 @@ mod tests {
 
         let (tx, rx) = futures::channel::oneshot::channel();
         executor
-            .spawn(
-                async {
-                    tx.send("CIAO").unwrap();
-                    super::global_executor()
-                        .spawn(
-                            async {
-                                let t = std::thread::current();
-                                info!("{:?}-{:?} : sent msg ...", t.name(), t.id());
-                            },
-                        )
-                        .unwrap();
-                },
-            )
+            .spawn(async {
+                tx.send("CIAO").unwrap();
+                super::global_executor()
+                    .spawn(async {
+                        let t = std::thread::current();
+                        info!("{:?}-{:?} : sent msg ...", t.name(), t.id());
+                    })
+                    .unwrap();
+            })
             .unwrap();
 
-        executor.run(
-            async {
-                let t = std::thread::current();
-                info!("{:?}-{:?} : waiting for msg ...", t.name(), t.id());
-                let msg = await!(rx).unwrap();
-                super::global_executor()
-                    .spawn(
-                        async move {
-                            let t = std::thread::current();
-                            info!("{:?}-{:?} : received msg: {}", t.name(), t.id(), msg);
-                        },
-                    )
-                    .unwrap();
-            },
-        );
+        executor.run(async {
+            let t = std::thread::current();
+            info!("{:?}-{:?} : waiting for msg ...", t.name(), t.id());
+            let msg = await!(rx).unwrap();
+            super::global_executor()
+                .spawn(async move {
+                    let t = std::thread::current();
+                    info!("{:?}-{:?} : received msg: {}", t.name(), t.id(), msg);
+                })
+                .unwrap();
+        });
     }
 
 }

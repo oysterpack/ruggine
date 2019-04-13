@@ -63,8 +63,8 @@ fn unary_bench(c: &mut Criterion) {
     let new_client = async move {
         let conn = await!(conn.compat()).unwrap();
         // the origin header is required by the http2 protocol - without it, the connection is rejected
-        let conn_with_origin = tower_add_origin::Builder::new()
-            .uri(format!("https://{}", rusty_ulid::Ulid::generate()))
+        let conn_with_origin = tower_request_modifier::Builder::new()
+            .set_origin("http://localhost")
             .build(conn)
             .unwrap();
         foo::client::Foo::new(conn_with_origin)
@@ -73,12 +73,9 @@ fn unary_bench(c: &mut Criterion) {
     c.bench_function("unary_bench", move |b| {
         b.iter(|| {
             let mut client = client.clone();
-            executor03.run(
-                async {
-                    let _response =
-                        await!(client.unary(grpc::Request::new(foo::Request {})).compat());
-                },
-            );
+            executor03.run(async {
+                let _response = await!(client.unary(grpc::Request::new(foo::Request {})).compat());
+            });
         });
     });
 }
@@ -156,13 +153,11 @@ fn start_server(executor: TaskExecutor, addr: &str) {
             match sock {
                 Ok(sock) => {
                     let serve = h2.serve(sock).compat();
-                    let spawn_result = executor03.spawn(
-                        async move {
-                            if let Err(err) = await!(serve) {
-                                error!("h2.serve() error: {:?}", err)
-                            }
-                        },
-                    );
+                    let spawn_result = executor03.spawn(async move {
+                        if let Err(err) = await!(serve) {
+                            error!("h2.serve() error: {:?}", err)
+                        }
+                    });
                     if let Err(err) = spawn_result {
                         // should never happen
                         error!("failed to spawn task to serve h2 connection: {:?}", err)

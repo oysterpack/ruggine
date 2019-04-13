@@ -549,11 +549,9 @@ mod tests {
 
         let now = Instant::now();
         executor
-            .spawn(
-                async move {
-                    await!(f).unwrap();
-                },
-            )
+            .spawn(async move {
+                await!(f).unwrap();
+            })
             .unwrap();
         let future_run_ts = executor.run(async move { await!(rx.next()) }).unwrap();
         let delay = future_run_ts - now;
@@ -572,30 +570,9 @@ mod tests {
 
         for i in 0..=10 {
             info!("interval_starting_now(): interval = {} ms", i);
-            crate::global_executor().run(
-                async {
-                    let duration = Duration::from_millis(i);
-                    let mut interval = Interval::new(duration).take(3);
-                    let mut i: usize = 1;
-                    let start = Instant::now();
-                    while let Some(_) = await!(interval.next()) {
-                        let elapsed_duration = start.elapsed();
-                        info!("interval event #{}: {:?}", i, elapsed_duration);
-                        i += 1;
-                    }
-                    let tot_elapsed_duration = start.elapsed();
-                    info!(
-                        "interval_starting_now(): total time elapsed: {:?}",
-                        tot_elapsed_duration
-                    );
-                },
-            );
-        }
-
-        let tot_elapsed_duration = crate::global_executor().run(
-            async {
-                let duration = Duration::from_millis(5);
-                let mut interval = Interval::new(duration).take(10);
+            crate::global_executor().run(async {
+                let duration = Duration::from_millis(i);
+                let mut interval = Interval::new(duration).take(3);
                 let mut i: usize = 1;
                 let start = Instant::now();
                 while let Some(_) = await!(interval.next()) {
@@ -608,9 +585,26 @@ mod tests {
                     "interval_starting_now(): total time elapsed: {:?}",
                     tot_elapsed_duration
                 );
+            });
+        }
+
+        let tot_elapsed_duration = crate::global_executor().run(async {
+            let duration = Duration::from_millis(5);
+            let mut interval = Interval::new(duration).take(10);
+            let mut i: usize = 1;
+            let start = Instant::now();
+            while let Some(_) = await!(interval.next()) {
+                let elapsed_duration = start.elapsed();
+                info!("interval event #{}: {:?}", i, elapsed_duration);
+                i += 1;
+            }
+            let tot_elapsed_duration = start.elapsed();
+            info!(
+                "interval_starting_now(): total time elapsed: {:?}",
                 tot_elapsed_duration
-            },
-        );
+            );
+            tot_elapsed_duration
+        });
         assert!(
             tot_elapsed_duration >= Duration::from_millis(49)
                 && tot_elapsed_duration <= Duration::from_millis(51)
@@ -623,31 +617,9 @@ mod tests {
 
         for i in 0..=10 {
             info!("interval_starting_now(): interval = {} ms", i);
-            crate::global_executor().run(
-                async {
-                    let duration = Duration::from_millis(i);
-                    let mut interval = Interval::starting_after(duration, duration).take(3);
-                    let mut i: usize = 1;
-                    let start = Instant::now();
-                    while let Some(_) = await!(interval.next()) {
-                        let elapsed_duration = start.elapsed();
-                        info!("interval event #{}: {:?}", i, elapsed_duration);
-                        i += 1;
-                    }
-                    let tot_elapsed_duration = start.elapsed();
-                    info!(
-                        "interval_starting_at(): total time elapsed: {:?}",
-                        tot_elapsed_duration
-                    );
-                },
-            );
-        }
-
-        let tot_elapsed_duration = crate::global_executor().run(
-            async {
-                let duration = Duration::from_millis(5);
-                let initial_delay = Duration::from_millis(10);
-                let mut interval = Interval::starting_after(initial_delay, duration).take(10);
+            crate::global_executor().run(async {
+                let duration = Duration::from_millis(i);
+                let mut interval = Interval::starting_after(duration, duration).take(3);
                 let mut i: usize = 1;
                 let start = Instant::now();
                 while let Some(_) = await!(interval.next()) {
@@ -657,12 +629,30 @@ mod tests {
                 }
                 let tot_elapsed_duration = start.elapsed();
                 info!(
-                    "interval_starting_now(): total time elapsed: {:?}",
+                    "interval_starting_at(): total time elapsed: {:?}",
                     tot_elapsed_duration
                 );
+            });
+        }
+
+        let tot_elapsed_duration = crate::global_executor().run(async {
+            let duration = Duration::from_millis(5);
+            let initial_delay = Duration::from_millis(10);
+            let mut interval = Interval::starting_after(initial_delay, duration).take(10);
+            let mut i: usize = 1;
+            let start = Instant::now();
+            while let Some(_) = await!(interval.next()) {
+                let elapsed_duration = start.elapsed();
+                info!("interval event #{}: {:?}", i, elapsed_duration);
+                i += 1;
+            }
+            let tot_elapsed_duration = start.elapsed();
+            info!(
+                "interval_starting_now(): total time elapsed: {:?}",
                 tot_elapsed_duration
-            },
-        );
+            );
+            tot_elapsed_duration
+        });
         // the first event occurs after 10 ms, and then every 5 seconds there after = 10 ms + (5 ms * 9) = 55 ms
         assert!(
             tot_elapsed_duration >= Duration::from_millis(54)

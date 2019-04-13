@@ -50,11 +50,9 @@ fn executor_bench(c: &mut Criterion) {
     c.bench_function("executor_spawn_ulid_generate_bench", move |b| {
         b.iter(|| {
             executor
-                .spawn(
-                    async {
-                        let _ = rusty_ulid::Ulid::generate();
-                    },
-                )
+                .spawn(async {
+                    let _ = rusty_ulid::Ulid::generate();
+                })
                 .unwrap();
         });
     });
@@ -62,11 +60,9 @@ fn executor_bench(c: &mut Criterion) {
     let mut executor = global_executor();
     c.bench_function("executor_run_ulid_generate_bench", move |b| {
         b.iter(|| {
-            executor.run(
-                async {
-                    let _ = rusty_ulid::Ulid::generate();
-                },
-            )
+            executor.run(async {
+                let _ = rusty_ulid::Ulid::generate();
+            })
         });
     });
 
@@ -74,11 +70,9 @@ fn executor_bench(c: &mut Criterion) {
     let mut executor = rt.executor().compat();
     c.bench_function("executor_tokio_spawn_ulid_generate_bench", move |b| {
         b.iter(|| {
-            executor.spawn(
-                async {
-                    let _ = rusty_ulid::Ulid::generate();
-                },
-            )
+            executor.spawn(async {
+                let _ = rusty_ulid::Ulid::generate();
+            })
         });
     });
 }

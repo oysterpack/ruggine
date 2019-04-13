@@ -24,9 +24,7 @@ use ruggine_protos_core::app;
 use futures03::{compat::*, prelude::*, task::SpawnExt};
 use log::*;
 use ruggine_async::futures as futures03;
-use std::net::{
-    SocketAddr, ToSocketAddrs
-};
+use std::net::{SocketAddr, ToSocketAddrs};
 use std::panic::catch_unwind;
 use tower::MakeService;
 
@@ -75,8 +73,8 @@ impl server::AppService for AppServiceProxy {
             let conn = make_client.make_service(());
             let conn = await!(conn.compat()).unwrap();
             // the origin header is required by the http2 protocol - without it, the connection is rejected
-            let conn_with_origin = tower_add_origin::Builder::new()
-                .uri("http://localhost")
+            let conn_with_origin = tower_request_modifier::Builder::new()
+                .set_origin("http://localhost")
                 .build(conn)
                 .unwrap();
             let mut app_service_client = client::AppService::new(conn_with_origin);
@@ -95,8 +93,12 @@ fn main() {
     info!("app is running: {:#?}", app);
 
     let executor = ruggine_async::global_executor();
-    let addr = "localhost:50501".to_socket_addrs().unwrap().next().unwrap();
-    let (server, _handle) = grpc_server(addr, executor, 50502);
+    let addr = "10.152.183.204:50501"
+        .to_socket_addrs()
+        .unwrap()
+        .next()
+        .expect("failed to resolve address: 10.152.183.204:50501");
+    let (server, _handle) = grpc_server(addr, executor, 50501);
     let _ = ruggine_async::global_executor().run(server);
 }
 
@@ -106,7 +108,7 @@ fn main() {
 pub fn grpc_server(
     addr: SocketAddr,
     executor: futures03::executor::ThreadPool,
-    port: usize
+    port: usize,
 ) -> (
     futures03::future::Abortable<impl futures03::Future<Output = ()>>,
     futures03::future::AbortHandle,
@@ -131,13 +133,11 @@ pub fn grpc_server(
                 match sock {
                     Ok(sock) => {
                         let serve = h2.serve(sock).compat();
-                        let spawn_result = executor.spawn(
-                            async move {
-                                if let Err(err) = await!(serve) {
-                                    error!("h2.serve() error: {:?}", err)
-                                }
-                            },
-                        );
+                        let spawn_result = executor.spawn(async move {
+                            if let Err(err) = await!(serve) {
+                                error!("h2.serve() error: {:?}", err)
+                            }
+                        });
                         if let Err(err) = spawn_result {
                             // should never happen
                             error!("failed to spawn task to serve h2 connection: {:?}", err)
