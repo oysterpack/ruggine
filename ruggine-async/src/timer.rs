@@ -35,7 +35,7 @@ use failure::Fail;
 use futures::{
     compat::*,
     prelude::*,
-    task::{Poll, Waker},
+    task::{Poll, Context},
 };
 use log::*;
 use std::{
@@ -349,9 +349,9 @@ impl Interval {
 impl Stream for Interval {
     type Item = ();
 
-    fn poll_next(mut self: Pin<&mut Self>, waker: &Waker) -> Poll<Option<Self::Item>> {
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         let f = Pin::new(&mut self.delay);
-        match f.poll(waker) {
+        match f.poll(cx) {
             Poll::Pending => Poll::Pending,
             Poll::Ready(Ok(_)) => {
                 self.delay = delay(self.interval).compat();
@@ -420,12 +420,12 @@ mod tests {
     {
         type Output = Result<T::Output, TimerError>;
 
-        fn poll(mut self: Pin<&mut Self>, waker: &Waker) -> Poll<Self::Output> {
+        fn poll(mut self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Self::Output> {
             match self.inner.as_mut() {
                 Some(delay) => {
                     let poll = {
                         let delay = Pin::new(delay);
-                        delay.poll(waker)
+                        delay.poll(ctx)
                     };
                     match poll {
                         Poll::Pending => Poll::Pending,
@@ -433,7 +433,7 @@ mod tests {
                             self.inner.take();
                             let future = &mut self.future;
                             let future = Pin::new(future);
-                            future.poll(waker).map(Ok)
+                            future.poll(ctx).map(Ok)
                         }
                         Poll::Ready(Err(err)) => Poll::Ready(Err(TimerError::from(err))),
                     }
@@ -441,7 +441,7 @@ mod tests {
                 None => {
                     let future = &mut self.future;
                     let future = Pin::new(future);
-                    future.poll(waker).map(Ok)
+                    future.poll(ctx).map(Ok)
                 }
             }
         }

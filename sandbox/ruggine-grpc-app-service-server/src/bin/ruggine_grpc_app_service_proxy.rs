@@ -93,11 +93,13 @@ fn main() {
     info!("app is running: {:#?}", app);
 
     let executor = ruggine_async::global_executor();
-    let addr = "10.152.183.204:50501"
+    // TODO: inject the DNS cname
+    let addr_str = "ruggine_grpc_app_service_server:50501";
+    let addr = addr_str
         .to_socket_addrs()
         .unwrap()
         .next()
-        .expect("failed to resolve address: 10.152.183.204:50501");
+        .expect(format!("failed to resolve address: {}", addr_str).as_str());
     let (server, _handle) = grpc_server(addr, executor, 50501);
     let _ = ruggine_async::global_executor().run(server);
 }

@@ -13,7 +13,6 @@ categories = ["concurrency"]
 
 [dependencies]
 ruggine_async = {path = "../ruggine-async", version="0.1"}
-futures-preview = {version = "0.3.0-alpha.13", features = ["compat"] }
 failure = "0.1.5"
 serde = { version = "1.0", optional = true, features = ["derive"] }
 

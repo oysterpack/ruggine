@@ -1,6 +1,6 @@
 FROM scratch
 
-COPY ./target/ruggine_grpc_app_service_server /
+COPY ./target/release/ruggine_grpc_app_service_server /
 
 EXPOSE 50501/tcp
 

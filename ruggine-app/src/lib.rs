@@ -22,7 +22,4 @@
 #![deny(missing_docs, missing_debug_implementations)]
 #![doc(html_root_url = "https://docs.rs/ruggine_app/0.1.0")]
 
-/// re-exporting futures 0.3 API in order to make it easy to use it side by side with futures 0.1 API
-pub use futures;
-
 pub mod service;
